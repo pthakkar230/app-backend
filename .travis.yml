@@ -1,0 +1,46 @@
+language: python
+cache: 
+  - pip
+  - apt
+sudo: required
+dist: trusty
+addons:
+  postgresql: "9.4"
+python:
+  - "3.5"
+# whitelist
+branches:  
+  only:
+    - master
+services:
+# enable docker service inside travis
+  - postgresql
+  - elasticsearch
+  - redis-server
+before_script:
+  - echo "listen_addresses = '*'" | sudo tee -a /etc/postgresql/9.*/main/postgresql.conf
+  - echo "host all all 0.0.0.0/0 trust" | sudo tee -a /etc/postgresql/9.*/main/pg_hba.conf
+  - sudo /etc/init.d/postgresql stop
+  - sudo /etc/init.d/postgresql start 9.4
+  - psql -c 'create database travis_ci_test;' -U postgres
+  - psql travis_ci_test -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -U postgres
+#  - sleep 10
+before_install:
+  - pip install awscli # install aws cli w/o sudo
+  - export PATH=$PATH:$HOME/.local/bin # put aws in the path
+# command to install dependencies
+install:
+  - pip install -U pip setuptools wheel
+  - pip install -r requirements/dev.txt
+  - pip install codecov
+# command to run tests
+script:
+  # run tests
+  #  - nosetests tests.docker
+  - nosetests --with-coverage tests.app
+  - nosetests tests.celery
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+notifications:
+  slack: 3blades:0hkVceOdmVuyXNpgHJHCneo9
+
