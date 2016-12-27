@@ -11,5 +11,7 @@
 
 Application server backend. Replaces hubserver.
 
+Refer to [docs repo](https://github.com/3blades/docs) for installation instructions. 
+
 This project enforces the [Contributor Covenant](./CODE_OF_CONDUCT.md). Be kind
 and build a nice open source community with us.
