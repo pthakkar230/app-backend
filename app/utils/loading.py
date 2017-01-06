@@ -3,6 +3,7 @@ import pkgutil
 import inspect
 import importlib.util
 
+
 def load(obj, package, params=None, **kwargs):
     """Return a dict of loader names mapped to their outputs.
     
@@ -19,7 +20,8 @@ def load(obj, package, params=None, **kwargs):
         Passed to :func:`iter_loaders`.
     """
     return {n: l(obj, **(params or {})) for
-        n, l in iter_loaders(package, **kwargs)}
+            n, l in iter_loaders(package, **kwargs)}
+
 
 def iter_loaders(package, exclude=None, key=None):
     """Iterate over packages and/or modules with a loader at their root
@@ -37,23 +39,27 @@ def iter_loaders(package, exclude=None, key=None):
         A callable that accepts a module as input and returns
         True or False to filter modules. The modules that
         result in False are not yielded."""
-    # use key rather than an if statement to avoid excesive imports
+    # use key rather than an if statement to avoid excessive imports
     key = join_keys(lambda m: callable(getattr(m, 'loader', None)), key)
     for module in iter_modules(package, exclude, key=key):
         yield module.__name__, module.loader
+
 
 def join_keys(*keys):
     """An "or" statement for multiple keys
 
     As a convenience non-callable keys are ignored
     """
+
     def key(obj):
         for k in keys:
             if callable(k) and k(obj):
                 return True
         else:
             return False
+
     return key
+
 
 def iter_modules(name, exclude=None, key=None):
     """Iterate over nested submodules
@@ -93,12 +99,15 @@ def iter_modules(name, exclude=None, key=None):
                 exclude.insert(0, name)
                 yield module
 
+
 def load_module(finder, name):
     """Load a module given its name and finder"""
     return finder.find_module(name).load_module(name)
 
+
 def frame_globals(i=0):
     return inspect_frame(i).f_globals
+
 
 def inspect_frame(i=0, last=None):
     if last:
@@ -108,7 +117,7 @@ def inspect_frame(i=0, last=None):
         # use the calling frame
         f = inspect.currentframe().f_back
     # shift back i frames
-    while i>0:
+    while i > 0:
         f = f.f_back
         i -= 1
     return f

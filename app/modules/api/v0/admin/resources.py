@@ -8,6 +8,7 @@ from .models import User
 
 ns = Namespace('admin', "Admin Access")
 
+
 def loader(api, **params):
     """Load admin namespace to an Api"""
     api.add_namespace(ns)
@@ -16,7 +17,6 @@ def loader(api, **params):
 
 @ns.route('/users')
 class Users(Resource):
-
     @ns.param('offset', 'query start index', type=int)
     @ns.param('limit', 'number of results', type=int)
     def get(self, offset, limit):

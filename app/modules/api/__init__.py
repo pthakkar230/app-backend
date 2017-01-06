@@ -4,6 +4,7 @@ from flask_restplus import Api
 from app.utils import match_specs
 from app.utils.loading import load, frame_globals
 
+
 def loader(app, **params):
     """Returns a Blueprint with loaded api"""
     specs = params.get('api_specs')
@@ -19,8 +20,9 @@ def loader(app, **params):
         key = None
     return load(app, '.', params=params, key=key)
 
+
 def api_blueprint(name, *args, **kwargs):
     bp = Blueprint(name, frame_globals(1)['__name__'], url_prefix='/api',
-        *kwargs.pop('bp_args', ()), **kwargs.pop('bp_kwargs', {}))
+                   *kwargs.pop('bp_args', ()), **kwargs.pop('bp_kwargs', {}))
     api = Api(bp, *args, **kwargs)
     return api, bp

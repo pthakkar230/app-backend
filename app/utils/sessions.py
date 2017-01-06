@@ -1,6 +1,7 @@
 from contextlib import contextmanager
-from .import exceptions as excs
+from . import exceptions as excs
 from sqlalchemy.exc import DBAPIError
+
 
 @contextmanager
 def handle_rollback(session, msg_prefix=None):
@@ -10,7 +11,7 @@ def handle_rollback(session, msg_prefix=None):
     Parameters
     ----------
         session: SQLAlchemy
-            The session to be commited with rollback handling.
+            The session to be committed with rollback handling.
         msg_prefix: str
             Prefix the reported error with the message.
 
@@ -39,9 +40,10 @@ def handle_rollback(session, msg_prefix=None):
         session.rollback()
         raise
 
+
 def prefix_message(p, m):
     """Prefix the message if a prefix is given
 
     All inputs are converted to strings
     """
-    return ("%s%s%s" % (p or "", " - " if p else "", m))
+    return "%s%s%s" % (p or "", " - " if p else "", m)

@@ -1,12 +1,13 @@
 from app import db
 from flask_security import UserMixin
 
+
 class User(db.Model, UserMixin):
     """
     User database model.
     """
     __tablename__ = 'user'
-    __table_args__ = {'useexisting': True} 
+    __table_args__ = {'useexisting': True}
 
     user_id = db.Column(
         db.Integer,
