@@ -3,16 +3,14 @@ test-warnings: false
 strictness: veryhigh
 max-line-length: 120
 uses:
-  - django
   - celery
   - flask
 autodetect: true
 requirements:
-  - deps/core.txt
-  - deps/test.txt
+  - requirements.txt
 ignore-paths:
   - docs
-  - mypackage/vendor
+  - vendor
 ignore-patterns:
   - ^example/doc_.*\.py$
   - (^|/)docs(/|$)
