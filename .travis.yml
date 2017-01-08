@@ -1,5 +1,5 @@
 language: python
-cache: 
+cache:
   - pip
   - apt
 sudo: required
@@ -9,7 +9,7 @@ addons:
 python:
   - "3.5"
 # whitelist
-branches:  
+branches:
   only:
     - master
 services:
@@ -42,5 +42,4 @@ script:
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 notifications:
-  slack: 3blades:0hkVceOdmVuyXNpgHJHCneo9
-
+  slack: 3blades:RouLDGyG58awmaGkjgvh9Yuz
