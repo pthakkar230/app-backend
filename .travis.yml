@@ -26,7 +26,6 @@ before_script:
   - psql travis_ci_test -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -U postgres
 #  - sleep 10
 before_install:
-  - pip install awscli # install aws cli w/o sudo
   - export PATH=$PATH:$HOME/.local/bin # put aws in the path
 # command to install dependencies
 install:
