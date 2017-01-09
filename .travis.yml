@@ -35,7 +35,7 @@ install:
 # command to run tests
 script:
   # run tests
-  - nosetests --with-coverage tests.app
+  - nosetests --with-coverage tests
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 notifications:
