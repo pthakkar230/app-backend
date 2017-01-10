@@ -6,6 +6,8 @@ import importlib.util
 
 def load(obj, package, params=None, **kwargs):
     """Return a dict of loader names mapped to their outputs.
+
+    See :func:`iter_loaders` for more details on loader collection.
     
     Parameters
     ----------
@@ -27,6 +29,7 @@ def iter_loaders(package, exclude=None, key=None):
     """Iterate over packages and/or modules with a loader at their root
 
     A module or package has a loader if it has a callable ``'loader'`` attribute.
+    Only top level loaders are yielded, and thus, expected to handle "subloading".
 
     Parameters
     ----------
@@ -38,7 +41,8 @@ def iter_loaders(package, exclude=None, key=None):
     key : callable
         A callable that accepts a module as input and returns
         True or False to filter modules. The modules that
-        result in False are not yielded."""
+        result in False are not yielded.
+    """
     # use key rather than an if statement to avoid excessive imports
     key = join_keys(lambda m: callable(getattr(m, 'loader', None)), key)
     for module in iter_modules(package, exclude, key=key):
@@ -61,26 +65,37 @@ def join_keys(*keys):
     return key
 
 
-def iter_modules(name, exclude=None, key=None):
+def iter_modules(name, package=None, exclude=None, key=None, root_only=True):
     """Iterate over nested submodules
 
     Parameters
     ----------
     name : str
-        Defines the scope of the search for submodules.
-    exclude : :obj:`list` of :obj:`str`, None
+        The package where submodules will be yielded from.
+        Relative names are allowed - the relative package is
+        infered from the calling frame.
+    package : str (default: None)
+        The package in which ``name`` resides. By default the
+        package of a relative import is infered, otherwise ``name``
+        is assumed to be an absolute import.
+    exclude : iterable, None
         A list of regex strings that exclude modules if
-        their names match the given patterns.
-    key : callable
+        their names match the given patterns. Use these
+        exclusion patterns to prevent imports.
+    key : callable (default: None)
         A callable that accepts a module as input and returns
         True or False to filter modules. The modules that
-        result in False are not yielded.
+        result in False are not yielded. No filtering by default.
+    root_only : bool (default: True)
+        By default, all submodules of one that is yielded are
+        ignored. If ``root_only`` is False, then all submodules
+        are yielded.
     """
     if name.startswith('.'):
         f = inspect_frame(1)
         while f.f_globals['__name__'] == __name__:
             f = f.f_back
-        package = f.f_globals['__name__']
+        package = f.f_globals['__package__']
     else:
         package = None
     spec = importlib.util.find_spec(name, package)
@@ -93,10 +108,11 @@ def iter_modules(name, exclude=None, key=None):
             if re.match(e, name):
                 break
         else:
-            module = load_module(finder, name)
+            module = load_module(finder, package + "." + name)
             if not key or key(module):
-                # don't search submodules
-                exclude.insert(0, name)
+                if root_only:
+                    # don't search submodules
+                    exclude.insert(0, r"%s.*" % name)
                 yield module
 
 
@@ -110,6 +126,16 @@ def frame_globals(i=0):
 
 
 def inspect_frame(i=0, last=None):
+    """Get a frame relative to the calling frame, or a reference frame
+
+    Parameters
+    ----------
+    i : int
+        Return the i'th frame from the reference frame
+    ref: frame (default: None)
+        The reference frame, if ``ref`` is None then
+        the calling frame is used instead.
+    """
     if last:
         # use a reference frame
         f = last

@@ -4,7 +4,7 @@ from flask_restplus import Resource, Namespace
 from app.utils.sessions import handle_rollback
 from app.modules.api.v0.schemas import SeriesSchema
 
-from .models import User
+from ..models import User
 
 ns = Namespace('admin', "Admin Access")
 
