@@ -1,3 +1,4 @@
+# coding=utf-8
 SECRET_KEY = 'REALLY-SHOULD-BE-CHANGED'
 
 FLASK_SERVER_NAME = 'localhost:5000'

@@ -1,3 +1,4 @@
+# coding=utf-8
 from werkzeug import exceptions as http_excs
 from flask_restplus import abort as restplus_abort
 

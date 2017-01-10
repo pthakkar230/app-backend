@@ -1,3 +1,4 @@
+# coding=utf-8
 from flask_login import current_user
 from flask_restplus import Resource, Namespace
 
@@ -22,7 +23,11 @@ class Users(Resource):
     def get(self, offset, limit):
         return {'users': User.query.offset(offset).limit(limit)}
 
-    def post(self):
+    @staticmethod
+    def post():
+        """
+        Create a new user.
+        """
         error = "Failed to create a new user."
         with handle_rollback(db.session, error):
             new_user = User(**args)

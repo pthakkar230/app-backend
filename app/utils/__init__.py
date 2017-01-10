@@ -1,4 +1,4 @@
-import re
+# coding=utf-8
 from semantic_version import Version, Spec
 from .exceptions import abort, http_excs, http_codes
 
