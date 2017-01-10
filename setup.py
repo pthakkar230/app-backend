@@ -1,3 +1,4 @@
+# coding=utf-8
 import os
 import sys
 from glob import glob
@@ -12,7 +13,7 @@ root = pjoin(here, 'app')
 packages = []
 for d, _, _ in os.walk(root):
     if os.path.exists(pjoin(d, '__init__.py')):
-        packages.append(d[len(here)+1:].replace(os.path.sep, '.'))
+        packages.append(d[len(here) + 1:].replace(os.path.sep, '.'))
 
 vinfo = {}
 with open(pjoin(root, 'version.py')) as f:
@@ -20,19 +21,19 @@ with open(pjoin(root, 'version.py')) as f:
     exec(code, {}, vinfo)
 
 setup_args = dict(
-    name            = name,
-    version         = vinfo['__version__'],
-    scripts         = glob(pjoin('scripts', '*')),
-    packages        = packages,
-    description     = "3Blades backend server",
-    long_description= "A backend server for the 3Blades' collaborative data science platform",
-    author          = '3Blades Development Team',
-    author_email    = 'contact@3blades.io',
-    url             = 'https://github.com/3Blades/app-backend',
-    license         = 'GNU AFFERO GPL',
-    platforms       = ["Linux", "Mac OS X", "Windows"],
-    keywords        = ['Interactive', 'Data', 'Science', 'Web', "Cloud", "Computing"],
-    classifiers     = [
+    name=name,
+    version=vinfo['__version__'],
+    scripts=glob(pjoin('scripts', '*')),
+    packages=packages,
+    description="3Blades backend server",
+    long_description="A backend server for the 3Blades' collaborative data science platform",
+    author='3Blades Development Team',
+    author_email='contact@3blades.io',
+    url='https://github.com/3Blades/app-backend',
+    license='GNU AFFERO GPL',
+    platforms=["Linux", "Mac OS X", "Windows"],
+    keywords=['Interactive', 'Data', 'Science', 'Web', "Cloud", "Computing"],
+    classifiers=[
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Intended Audience :: Science/Research',

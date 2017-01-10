@@ -1,3 +1,4 @@
+# coding=utf-8
 from contextlib import contextmanager
 from . import exceptions as excs
 from sqlalchemy.exc import DBAPIError

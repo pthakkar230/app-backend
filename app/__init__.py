@@ -1,3 +1,5 @@
+# coding=utf-8
+# coding=utf-8
 from flask import Flask
 from .utils.loading import load
 from flask_sqlalchemy import SQLAlchemy
