@@ -10,7 +10,7 @@ the following steps.
 `git checkout -b new-branch-name`.
 4. Make the necessary changes and commit them per the guidelines below.
 5. Push the changes to your local branch.
-6. Submit a pull request to 3Blades/core-backend and await review.
+6. Submit a pull request to 3Blades/app-backend and await review.
 
 ## Commit Messages
 
