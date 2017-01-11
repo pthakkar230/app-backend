@@ -93,7 +93,8 @@ def iter_modules(name, exclude=None, key=None):
             if re.match(e, name):
                 break
         else:
-            module = load_module(finder, name)
+            fullname = ".".join(package, name) if package else name
+            module = load_module(finder, fullname)
             if not key or key(module):
                 # don't search submodules
                 exclude.insert(0, name)
