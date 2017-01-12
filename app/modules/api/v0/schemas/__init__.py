@@ -1,3 +1,4 @@
+# coding=utf-8
 from flask_restplus.reqparse import RequestParser
 
 SeriesSchema = RequestParser()
