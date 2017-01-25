@@ -11,8 +11,12 @@ engines:
     enabled: true
   pep8:
     enabled: true
+    checks:
+      E501:
+        enabled: false
 ratings:
   paths:
   - "**.py"
 exclude_paths:
-- tests/
+- "**/tests/*"
+- "**/migrations/*"

@@ -14,35 +14,39 @@ branches:
     - master
 services:
 # enable docker service inside travis
+  - docker
   - postgresql
-  - elasticsearch
   - redis-server
 before_script:
   - echo "listen_addresses = '*'" | sudo tee -a /etc/postgresql/9.*/main/postgresql.conf
   - echo "host all all 0.0.0.0/0 trust" | sudo tee -a /etc/postgresql/9.*/main/pg_hba.conf
   - sudo /etc/init.d/postgresql stop
   - sudo /etc/init.d/postgresql start 9.4
+  - psql template1 -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -U postgres
   - psql -c 'create database travis_ci_test;' -U postgres
-  - psql travis_ci_test -c 'CREATE EXTENSION IF NOT EXISTS hstore;' -U postgres
 #  - sleep 10
 before_install:
+  - docker --version  # document the version travis is using
   - export PATH=$PATH:$HOME/.local/bin # put aws in the path
+  - export DJANGO_SETTINGS_MODULE="appdj.settings.test"
+  - export REDIS_URL="redis://localhost:6379/0"
+  - export DATABASE_URL="postgres://postgres:@localhost:5432/travis_ci_test"
 # command to install dependencies
 install:
   - pip install -U pip setuptools wheel
-  - pip install -r requirements.txt
+  - pip install -r requirements/dev.txt
   - pip install codecov
 # command to run tests
 script:
   # run tests
   - coverage run --source='.' manage.py test && coverage report -m
-  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+#  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
   # build the image
-  - docker build --no-cache -t $DOCKER_IMAGE_NAME .
+#  - docker build --no-cache -t $DOCKER_IMAGE_NAME .
   # tag the build
-  - docker tag $DOCKER_IMAGE_NAME $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER
+#  - docker tag $DOCKER_IMAGE_NAME $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER
   # push image to the repository
-  - docker push $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER
+#  - docker push $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 notifications:

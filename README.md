@@ -16,6 +16,16 @@ Refer to [docs repo](https://github.com/3blades/docs) for installation instructi
 This project enforces the [Contributor Covenant](./CODE_OF_CONDUCT.md). Be kind
 and build a nice open source community with us.
 
+## Dev Setup
+
+- `pip install -r requirements.txt`
+- run your database and redis
+- add env variables: `DATABASE_URL`, `REDIS_URL`, `DJANGO_SETTINGS_MODULE=appdj.settings.dev`
+- run `python manage.py migrate --fake-initial`
+- run `python manage.py runserver`
+- go to [http://localhost:8000/swagger/](http://localhost:8000/swagger/)
+
+
 ## Copyright and license
 
 Copyright © 2016-2017 3Blades, LLC. All rights reserved, except as follows. Code

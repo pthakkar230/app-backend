@@ -1,2 +1,0 @@
-# each line is parsed as a dict
-'test': ['pytest']
