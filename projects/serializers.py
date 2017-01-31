@@ -3,12 +3,11 @@ import base64
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from base.serializers import HashIDSerializer
 from users.serializers import UserSerializer
-from .models import Project, File, ProjectUsers
+from .models import Project, File, Collaborator
 
 
-class ProjectSerializer(HashIDSerializer):
+class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ('id', 'name', 'description', 'private', 'last_updated')
@@ -16,11 +15,11 @@ class ProjectSerializer(HashIDSerializer):
     def create(self, validated_data):
         project = super().create(validated_data)
         request = self.context['request']
-        ProjectUsers.objects.create(project=project, owner=True, user=request.user)
+        Collaborator.objects.create(project=project, owner=True, user=request.user)
         return project
 
 
-class FileAuthorSerializer(HashIDSerializer):
+class FileAuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('id', 'email', 'username')
@@ -35,7 +34,7 @@ class Base64CharField(serializers.CharField):
         return base64.b64decode(data)
 
 
-class FileSerializer(HashIDSerializer):
+class FileSerializer(serializers.ModelSerializer):
     content = Base64CharField()
     size = serializers.IntegerField(read_only=True)
 
@@ -65,9 +64,9 @@ class FileSerializer(HashIDSerializer):
         return instance
 
 
-class CollaboratorSerializer(HashIDSerializer):
+class CollaboratorSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
-        model = ProjectUsers
+        model = Collaborator
         fields = ('id', 'owner', 'joined', 'user')

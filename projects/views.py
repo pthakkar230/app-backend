@@ -2,7 +2,7 @@ from rest_framework import viewsets
 
 from base.views import NamespaceMixin
 from .serializers import ProjectSerializer, FileSerializer, CollaboratorSerializer
-from .models import Project, File, ProjectUsers
+from .models import Project, File, Collaborator
 
 
 class ProjectViewSet(NamespaceMixin, viewsets.ModelViewSet):
@@ -16,5 +16,5 @@ class FileViewSet(NamespaceMixin, viewsets.ModelViewSet):
 
 
 class CollaboratorViewSet(NamespaceMixin, viewsets.ModelViewSet):
-    queryset = ProjectUsers.objects.all()
+    queryset = Collaborator.objects.all()
     serializer_class = CollaboratorSerializer

@@ -1,10 +1,11 @@
 import random
 import factory
 from django.utils import timezone
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from projects.tests.factories import ProjectFactory
 from servers import models
+from users.tests.factories import UserFactory
 
 
 class EnvironmentTypeFactory(factory.django.DjangoModelFactory):
@@ -36,6 +37,7 @@ class ServerFactory(factory.django.DjangoModelFactory):
     environment_type = factory.SubFactory(EnvironmentTypeFactory)
     environment_resources = factory.SubFactory(EnvironmentResourcesFactory)
     project = factory.SubFactory(ProjectFactory)
+    created_by = factory.SubFactory(UserFactory)
 
 
 class WorkspaceFactory(factory.django.DjangoModelFactory):

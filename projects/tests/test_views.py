@@ -9,7 +9,6 @@ from rest_framework.test import APITestCase
 
 from projects.tests.factories import CollaboratorFactory, FileFactory
 from users.tests.factories import UserFactory
-from utils import encode_id
 from ..models import Project, File
 
 
@@ -42,18 +41,16 @@ class ProjectTest(APITestCase):
     def test_project_details(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
-        project_pk = encode_id(project.pk)
-        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project_pk})
+        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(project.name, response.data['name'])
-        self.assertEqual(project_pk, response.data['id'])
+        self.assertEqual(str(project.pk), response.data['id'])
 
     def test_project_update(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
-        project_pk = encode_id(project.pk)
-        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project_pk})
+        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         data = dict(
             name='Test 1',
             description='Test description',
@@ -66,8 +63,7 @@ class ProjectTest(APITestCase):
     def test_project_partial_update(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
-        project_pk = encode_id(project.pk)
-        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project_pk})
+        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         data = dict(
             name='Test 1',
         )
@@ -79,8 +75,7 @@ class ProjectTest(APITestCase):
     def test_project_delete(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
-        project_pk = encode_id(project.pk)
-        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project_pk})
+        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertIsNone(Project.objects.filter(pk=project.pk).first())
@@ -93,11 +88,9 @@ class ProjectFileTest(APITestCase):
         token = Token.objects.create(user=self.user)
         self.token_header = 'Token {}'.format(token.key)
         self.project = collaborator.project
-        self.project_pk = encode_id(self.project.id)
-        self.user_pk = encode_id(self.user.id)
-        self.url_kwargs = {'namespace': self.user.username, 'project_pk': self.project_pk}
+        self.url_kwargs = {'namespace': self.user.username, 'project_pk': self.project.pk}
         self.user_dir = Path('/tmp', self.user.username)
-        self.project_root = self.user_dir.joinpath(self.project_pk)
+        self.project_root = self.user_dir.joinpath(str(self.project.pk))
         self.project_root.mkdir(parents=True)
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 
@@ -111,8 +104,8 @@ class ProjectFileTest(APITestCase):
             path='test.py',
             encoding='utf-8',
             content=base64.b64encode(file_content),
-            author=self.user_pk,
-            project=self.project_pk,
+            author=self.user.pk,
+            project=self.project.pk,
         )
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -132,7 +125,7 @@ class ProjectFileTest(APITestCase):
         content = b'test'
         project_file = FileFactory(author=self.user, project=self.project, content=content)
         kwargs = self.url_kwargs
-        kwargs['pk'] = encode_id(project_file.pk)
+        kwargs['pk'] = project_file.pk
         url = reverse('file-detail', kwargs=kwargs)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -147,15 +140,15 @@ class ProjectFileTest(APITestCase):
         content = b'test'
         project_file = FileFactory(author=self.user, project=self.project, content=content)
         kwargs = self.url_kwargs
-        kwargs['pk'] = encode_id(project_file.pk)
+        kwargs['pk'] = project_file.pk
         url = reverse('file-detail', kwargs=kwargs)
         new_content = b'test 123\ntest'
         data = dict(
             path='test/test.py',
             encoding='utf-8',
             content=base64.b64encode(new_content),
-            author=self.user_pk,
-            project=self.project_pk,
+            author=self.user.pk,
+            project=self.project.pk,
         )
         response = self.client.put(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -170,7 +163,7 @@ class ProjectFileTest(APITestCase):
         project_file = FileFactory(author=self.user, project=self.project)
         sys_path = project_file.sys_path
         kwargs = self.url_kwargs
-        kwargs['pk'] = encode_id(project_file.pk)
+        kwargs['pk'] = project_file.pk
         url = reverse('file-detail', kwargs=kwargs)
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

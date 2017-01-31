@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 import dj_database_url
+import uuid
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -35,7 +36,6 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',
@@ -62,7 +62,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'base.middleware.NamespaceMiddleware',
-    'base.middleware.HashIDMiddleware',
 ]
 
 ROOT_URLCONF = 'appdj.urls'
@@ -149,10 +148,10 @@ SWAGGER_SETTINGS = {
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
-        'drf_ujson.renderers.UJSONRenderer',
+        'rest_framework.renderers.JSONRenderer',
     ),
     'DEFAULT_PARSER_CLASSES': (
-        'drf_ujson.parsers.UJSONParser',
+        'rest_framework.parsers.JSONParser',
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -165,8 +164,6 @@ REST_FRAMEWORK = {
 }
 
 RESOURCE_DIR = os.environ.get('RESOURCE_DIR', '/workspaces')
-
-SITE_ID = 1
 
 CACHES = {
     'default': {
@@ -182,3 +179,23 @@ CACHES = {
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
+# celery
+CELERY_RESULT_BACKEND = 'django-cache'
+CELERY_BROKER_POOL_LIMIT = 1  # Will decrease connection usage
+CELERY_BROKER_HEARTBEAT = None  # We're using TCP keep-alive instead
+CELERY_BROKER_CONNECTION_TIMEOUT = 30  # May require a long timeout due to Linux DNS timeouts etc
+CELERY_SEND_EVENTS = False  # Will not create celeryev.* queues
+CELERY_EVENT_QUEUE_EXPIRES = 60  # Will delete all celeryev. queues without consumers after 1 minute.
+CELERY_BROKER_URL = os.environ.get('RABBITMQ_URL')
+
+USE_X_FORWARDED_HOST = True
+
+PRIMARY_KEY_FIELD = ('django.db.models.UUIDField', dict(primary_key=True, default=uuid.uuid4, editable=False))
+
+MIGRATION_MODULES = {
+    'admin': 'appdj.migrations.admin',
+    'auth': 'appdj.migrations.auth',
+    'contenttypes': 'appdj.migrations.contenttypes',
+    'django_celery_results': 'appdj.migrations.django_celery_results'
+}
