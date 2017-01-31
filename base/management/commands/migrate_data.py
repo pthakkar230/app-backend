@@ -103,7 +103,7 @@ class Command(BaseCommand):
             project, _ = Project.objects.get_or_create(
                 name=row['name'],
                 defaults=dict(
-                    description=row['description'],
+                    description=row['description'] or '',
                     private=row['private'],
                     last_updated=row['last_updated'] or timezone.now()
                 )
@@ -137,15 +137,15 @@ class Command(BaseCommand):
                 defaults=dict(
                     image_name=row['image_name'],
                     created_at=row['created_at'],
-                    cmd=row['cmd'],
-                    description=row['description'],
-                    work_dir=row['work_dir'],
+                    cmd=row['cmd'] or '',
+                    description=row['description'] or '',
+                    work_dir=row['work_dir'] or '',
                     env_vars=row['env_vars'],
-                    container_path=row['container_path'],
+                    container_path=row['container_path'] or '',
                     container_port=row['container_port'],
                     active=row['active'],
-                    urldoc=row['urldoc'],
-                    type=row['type'],
+                    urldoc=row['urldoc'] or '',
+                    type=row['type'] or '',
                     usage=row['usage']
                 )
             )
@@ -172,7 +172,7 @@ class Command(BaseCommand):
                 defaults=dict(
                     cpu=row['cpu'],
                     memory=row['memory'],
-                    description=row['description'],
+                    description=row['description'] or '',
                     created_at=row['created_at'] or timezone.now(),
                     active=row['active'],
                     storage_size=row['storage_size']
@@ -240,7 +240,7 @@ class Command(BaseCommand):
                 Model.objects.get_or_create(
                     server=server,
                     defaults=dict(
-                        method=row['model_method'],
+                        method=row['model_method'] or '',
                         script=row['model_script']
                     )
                 )
@@ -248,7 +248,7 @@ class Command(BaseCommand):
                 Job.objects.get_or_create(
                     server=server,
                     defaults=dict(
-                        method=row['job_method'],
+                        method=row['job_method'] or '',
                         script=row['job_script']
                     )
                 )
