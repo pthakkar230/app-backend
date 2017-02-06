@@ -3,10 +3,6 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
-from django.utils.functional import cached_property
-
-from base.models import HashIDMixin
-from utils import encode_id
 
 
 class UserProfile(models.Model):
@@ -21,7 +17,6 @@ class UserProfile(models.Model):
     billing_address = models.OneToOneField('billing.BillingAddress', blank=True, null=True)
     billing_plan = models.OneToOneField('billing.BillingPlan', blank=True, null=True)
     current_login_ip = models.CharField(max_length=20, blank=True, null=True)
-    last_login_at = models.DateTimeField(blank=True, null=True)
     last_login_ip = models.CharField(max_length=20, blank=True, null=True)
     login_count = models.IntegerField(blank=True, null=True)
     timezone = models.CharField(db_column='Timezone', max_length=20, blank=True, null=True)
@@ -35,10 +30,6 @@ class UserProfile(models.Model):
             return key_path.read_text()
         return ''
 
-    @cached_property
-    def hashid(self):
-        return encode_id(self.user_id)
-
 
 class Email(models.Model):
     address = models.CharField(max_length=255, primary_key=True)
@@ -46,11 +37,8 @@ class Email(models.Model):
     public = models.BooleanField(default=False)
     unsubscribed = models.BooleanField(default=True)
 
-    class Meta:
-        db_table = 'email'
 
-
-class Integration(HashIDMixin, models.Model):
+class Integration(models.Model):
     GITHUB = 'github'
     S3 = 's3'
     GOOGLE = 'google'
@@ -77,6 +65,3 @@ class Integration(HashIDMixin, models.Model):
     scopes = ArrayField(models.CharField(max_length=255), blank=True, null=True)
     provider = models.CharField(max_length=255)
     settings = JSONField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'integration'

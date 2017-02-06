@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from base.serializers import HashIDSerializer
 from . import models
 
 
@@ -8,8 +7,9 @@ class ServerCreateMixin(object):
     def create(self, validated_data):
         server_data = validated_data.pop('server')
         view = self.context['view']
+        user = self.context['request'].user
         project_pk = view.kwargs['project_pk']
-        server = models.Server.objects.create(project_id=project_pk, **server_data)
+        server = models.Server.objects.create(project_id=project_pk, created_by=user, **server_data)
         concrete = self.Meta.model.objects.create(server=server, **validated_data)
         return concrete
 
@@ -21,19 +21,19 @@ class ServerCreateMixin(object):
         return super().update(instance, validated_data)
 
 
-class EnvironmentTypeSerializer(HashIDSerializer):
+class EnvironmentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnvironmentType
         fields = ('id', 'name', 'image_name', 'cmd')
 
 
-class EnvironmentResourceSerializer(HashIDSerializer):
+class EnvironmentResourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnvironmentResource
         fields = ('id', 'name', 'cpu', 'memory', 'active')
 
 
-class ServerSerializer(HashIDSerializer):
+class ServerSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Server
         fields = ('id', 'name', 'created_at', 'environment_type', 'environment_resources', 'startup_script')
@@ -71,7 +71,7 @@ class DataSourceSerializer(ConcreteServerSerializer):
         fields = ConcreteServerSerializer.Meta.fields
 
 
-class ServerRunStatisticsSerializer(HashIDSerializer):
+class ServerRunStatisticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ServerRunStatistics
         fields = ('id', 'start', 'stop', 'exit_code', 'size', 'stacktrace')
@@ -84,7 +84,7 @@ class ServerRunStatisticsAggregatedSerializer(serializers.Serializer):
     stop = serializers.DateTimeField()
 
 
-class ServerStatisticsSerializer(HashIDSerializer):
+class ServerStatisticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ServerStatistics
         fields = ('id', 'start', 'stop', 'size')
@@ -96,7 +96,7 @@ class ServerStatisticsAggregatedSerializer(serializers.Serializer):
     stop = serializers.DateTimeField()
 
 
-class SshTunnelSerializer(HashIDSerializer):
+class SshTunnelSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.SshTunnel
         fields = ('id', 'name', 'host', 'local_port', 'remote_port', 'endpoint', 'username')

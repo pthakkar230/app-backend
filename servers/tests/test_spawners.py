@@ -17,7 +17,7 @@ class TestDockerSpawnerForModel(TestCase):
         self.server = ModelFactory(
             server__environment_type=EnvironmentTypeFactory(
                 image_name='test',
-                cmd='{model.hashid}|from {model.script:.{script_name_len}} import {model.method}',
+                cmd='{model.pk}|from {model.script:.{script_name_len}} import {model.method}',
                 work_dir='/test',
                 env_vars={'test': 'test', 'test2': '{server.name}'},
                 container_path='/resources',

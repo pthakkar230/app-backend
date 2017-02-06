@@ -4,7 +4,6 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from projects.tests.factories import CollaboratorFactory
-from utils import encode_id
 
 from ..models import Model, Job, Workspace, DataSource
 from .factories import EnvironmentTypeFactory, EnvironmentResourcesFactory, ModelFactory, JobFactory,\
@@ -18,7 +17,7 @@ class WorkspaceTest(APITestCase):
         self.project = collaborator.project
         token = Token.objects.create(user=self.user)
         self.token_header = 'Token {}'.format(token.key)
-        self.url_kwargs = {'namespace': self.user.username, 'project_pk': encode_id(self.project.pk)}
+        self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.env_type = EnvironmentTypeFactory()
         self.env_res = EnvironmentResourcesFactory()
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
@@ -28,8 +27,8 @@ class WorkspaceTest(APITestCase):
         data = dict(
             server=dict(
                 name='test',
-                environment_type=encode_id(self.env_type.pk),
-                environment_resources=encode_id(self.env_res.pk)
+                environment_type=str(self.env_type.pk),
+                environment_resources=str(self.env_res.pk)
             )
         )
         response = self.client.post(url, data)
@@ -48,7 +47,7 @@ class WorkspaceTest(APITestCase):
     def test_workspace_details(self):
         workspace = WorkspaceFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(workspace.pk)
+            'pk': str(workspace.pk)
         })
         url = reverse('workspace-detail', kwargs=self.url_kwargs)
         response = self.client.get(url)
@@ -57,14 +56,14 @@ class WorkspaceTest(APITestCase):
     def test_workspace_update(self):
         workspace = WorkspaceFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(workspace.pk)
+            'pk': str(workspace.pk)
         })
         url = reverse('workspace-detail', kwargs=self.url_kwargs)
         data = dict(
             server=dict(
                 name='test',
-                environment_type=encode_id(self.env_type.pk),
-                environment_resources=encode_id(self.env_res.pk)
+                environment_type=str(self.env_type.pk),
+                environment_resources=str(self.env_res.pk)
             )
         )
         response = self.client.put(url, data)
@@ -75,7 +74,7 @@ class WorkspaceTest(APITestCase):
     def test_workspace_partial_update(self):
         workspace = WorkspaceFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(workspace.pk)
+            'pk': str(workspace.pk)
         })
         url = reverse('workspace-detail', kwargs=self.url_kwargs)
         data = dict(
@@ -89,7 +88,7 @@ class WorkspaceTest(APITestCase):
     def test_workspace_delete(self):
         workspace = WorkspaceFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(workspace.pk)
+            'pk': str(workspace.pk)
         })
         url = reverse('workspace-detail', kwargs=self.url_kwargs)
         response = self.client.delete(url)
@@ -104,7 +103,7 @@ class ModelTest(APITestCase):
         self.project = collaborator.project
         token = Token.objects.create(user=self.user)
         self.token_header = 'Token {}'.format(token.key)
-        self.url_kwargs = {'namespace': self.user.username, 'project_pk': encode_id(self.project.pk)}
+        self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.env_type = EnvironmentTypeFactory()
         self.env_res = EnvironmentResourcesFactory()
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
@@ -116,8 +115,8 @@ class ModelTest(APITestCase):
             method='test',
             server=dict(
                 name='test',
-                environment_type=encode_id(self.env_type.pk),
-                environment_resources=encode_id(self.env_res.pk)
+                environment_type=str(self.env_type.pk),
+                environment_resources=str(self.env_res.pk)
             )
         )
         response = self.client.post(url, data)
@@ -136,7 +135,7 @@ class ModelTest(APITestCase):
     def test_model_details(self):
         model = ModelFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(model.pk)
+            'pk': str(model.pk)
         })
         url = reverse('model-detail', kwargs=self.url_kwargs)
         response = self.client.get(url)
@@ -145,7 +144,7 @@ class ModelTest(APITestCase):
     def test_model_update(self):
         model = ModelFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(model.pk)
+            'pk': str(model.pk)
         })
         url = reverse('model-detail', kwargs=self.url_kwargs)
         data = dict(
@@ -153,8 +152,8 @@ class ModelTest(APITestCase):
             method='test',
             server=dict(
                 name='test',
-                environment_type=encode_id(self.env_type.pk),
-                environment_resources=encode_id(self.env_res.pk)
+                environment_type=str(self.env_type.pk),
+                environment_resources=str(self.env_res.pk)
             )
         )
         response = self.client.put(url, data)
@@ -165,7 +164,7 @@ class ModelTest(APITestCase):
     def test_model_partial_update(self):
         model = ModelFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(model.pk)
+            'pk': str(model.pk)
         })
         url = reverse('model-detail', kwargs=self.url_kwargs)
         data = dict(
@@ -179,7 +178,7 @@ class ModelTest(APITestCase):
     def test_model_delete(self):
         model = ModelFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(model.pk)
+            'pk': str(model.pk)
         })
         url = reverse('model-detail', kwargs=self.url_kwargs)
         response = self.client.delete(url)
@@ -194,7 +193,7 @@ class JobTest(APITestCase):
         self.project = collaborator.project
         token = Token.objects.create(user=self.user)
         self.token_header = 'Token {}'.format(token.key)
-        self.url_kwargs = {'namespace': self.user.username, 'project_pk': encode_id(self.project.pk)}
+        self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.env_type = EnvironmentTypeFactory()
         self.env_res = EnvironmentResourcesFactory()
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
@@ -206,8 +205,8 @@ class JobTest(APITestCase):
             method='test',
             server=dict(
                 name='test',
-                environment_type=encode_id(self.env_type.pk),
-                environment_resources=encode_id(self.env_res.pk)
+                environment_type=str(self.env_type.pk),
+                environment_resources=str(self.env_res.pk)
             )
         )
         response = self.client.post(url, data)
@@ -226,7 +225,7 @@ class JobTest(APITestCase):
     def test_job_details(self):
         job = JobFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(job.pk)
+            'pk': str(job.pk)
         })
         url = reverse('job-detail', kwargs=self.url_kwargs)
         response = self.client.get(url)
@@ -235,7 +234,7 @@ class JobTest(APITestCase):
     def test_job_update(self):
         job = JobFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(job.pk)
+            'pk': str(job.pk)
         })
         url = reverse('job-detail', kwargs=self.url_kwargs)
         data = dict(
@@ -243,8 +242,8 @@ class JobTest(APITestCase):
             method='test',
             server=dict(
                 name='test',
-                environment_type=encode_id(self.env_type.pk),
-                environment_resources=encode_id(self.env_res.pk)
+                environment_type=str(self.env_type.pk),
+                environment_resources=str(self.env_res.pk)
             )
         )
         response = self.client.put(url, data)
@@ -255,7 +254,7 @@ class JobTest(APITestCase):
     def test_job_partial_update(self):
         job = JobFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(job.pk)
+            'pk': str(job.pk)
         })
         url = reverse('job-detail', kwargs=self.url_kwargs)
         data = dict(
@@ -269,7 +268,7 @@ class JobTest(APITestCase):
     def test_job_delete(self):
         job = JobFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(job.pk)
+            'pk': str(job.pk)
         })
         url = reverse('job-detail', kwargs=self.url_kwargs)
         response = self.client.delete(url)
@@ -284,7 +283,7 @@ class DataSourceTest(APITestCase):
         self.project = collaborator.project
         token = Token.objects.create(user=self.user)
         self.token_header = 'Token {}'.format(token.key)
-        self.url_kwargs = {'namespace': self.user.username, 'project_pk': encode_id(self.project.pk)}
+        self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.env_type = EnvironmentTypeFactory()
         self.env_res = EnvironmentResourcesFactory()
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
@@ -294,8 +293,8 @@ class DataSourceTest(APITestCase):
         data = dict(
             server=dict(
                 name='test',
-                environment_type=encode_id(self.env_type.pk),
-                environment_resources=encode_id(self.env_res.pk)
+                environment_type=str(self.env_type.pk),
+                environment_resources=str(self.env_res.pk)
             )
         )
         response = self.client.post(url, data)
@@ -314,7 +313,7 @@ class DataSourceTest(APITestCase):
     def test_data_source_details(self):
         data_source = DataSourceFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(data_source.pk)
+            'pk': str(data_source.pk)
         })
         url = reverse('datasource-detail', kwargs=self.url_kwargs)
         response = self.client.get(url)
@@ -323,14 +322,14 @@ class DataSourceTest(APITestCase):
     def test_data_source_update(self):
         data_source = DataSourceFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(data_source.pk)
+            'pk': str(data_source.pk)
         })
         url = reverse('datasource-detail', kwargs=self.url_kwargs)
         data = dict(
             server=dict(
                 name='test',
-                environment_type=encode_id(self.env_type.pk),
-                environment_resources=encode_id(self.env_res.pk)
+                environment_type=str(self.env_type.pk),
+                environment_resources=str(self.env_res.pk)
             )
         )
         response = self.client.put(url, data)
@@ -341,7 +340,7 @@ class DataSourceTest(APITestCase):
     def test_data_source_partial_update(self):
         data_source = DataSourceFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(data_source.pk)
+            'pk': str(data_source.pk)
         })
         url = reverse('datasource-detail', kwargs=self.url_kwargs)
         data = dict(
@@ -355,7 +354,7 @@ class DataSourceTest(APITestCase):
     def test_data_source_delete(self):
         data_source = DataSourceFactory(server__project=self.project)
         self.url_kwargs.update({
-            'pk': encode_id(data_source.pk)
+            'pk': str(data_source.pk)
         })
         url = reverse('datasource-detail', kwargs=self.url_kwargs)
         response = self.client.delete(url)
@@ -370,7 +369,7 @@ class ServerRunStatisticsTestCase(APITestCase):
         self.project = collaborator.project
         token = Token.objects.create(user=self.user)
         self.token_header = 'Token {}'.format(token.key)
-        self.url_kwargs = {'namespace': self.user.username, 'project_pk': encode_id(self.project.pk)}
+        self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 
     def test_list(self):
@@ -378,9 +377,9 @@ class ServerRunStatisticsTestCase(APITestCase):
         stats = ServerRunStatisticsFactory(server=model.server)
         url = reverse('serverrunstatistics-list', kwargs={
             'namespace': self.project.get_owner_name(),
-            'project_pk': self.project.hashid,
+            'project_pk': str(self.project.pk),
             'server_type': 'models',
-            'server_pk': model.hashid
+            'server_pk': str(model.pk)
         })
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -400,7 +399,7 @@ class ServerStatisticsTestCase(APITestCase):
         self.project = collaborator.project
         token = Token.objects.create(user=self.user)
         self.token_header = 'Token {}'.format(token.key)
-        self.url_kwargs = {'namespace': self.user.username, 'project_pk': encode_id(self.project.pk)}
+        self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 
     def test_list(self):
@@ -408,9 +407,9 @@ class ServerStatisticsTestCase(APITestCase):
         stats = ServerStatisticsFactory(server=model.server)
         url = reverse('serverstatistics-list', kwargs={
             'namespace': self.project.get_owner_name(),
-            'project_pk': self.project.hashid,
+            'project_pk': str(self.project.pk),
             'server_type': 'models',
-            'server_pk': model.hashid
+            'server_pk': str(model.pk)
         })
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

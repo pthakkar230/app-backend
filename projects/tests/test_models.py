@@ -5,7 +5,6 @@ from django.test import TestCase, override_settings
 
 from ..models import File, Project
 from .factories import CollaboratorFactory
-from utils import encode_id
 
 
 class ProjectTestCase(TestCase):
@@ -30,11 +29,9 @@ class ProjectFileTestCase(TestCase):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
         self.project = collaborator.project
-        self.project_pk = encode_id(self.project.id)
-        self.user_pk = encode_id(self.user.id)
-        self.url_kwargs = {'namespace': self.user.username, 'project_pk': self.project_pk}
+        self.url_kwargs = {'namespace': self.user.username, 'project_pk': self.project.id}
         self.user_dir = Path('/tmp', self.user.username)
-        self.project_root = self.user_dir.joinpath(self.project_pk)
+        self.project_root = self.user_dir.joinpath(str(self.project.id))
         self.project_root.mkdir(parents=True)
 
     def tearDown(self):

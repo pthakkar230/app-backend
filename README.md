@@ -19,9 +19,12 @@ and build a nice open source community with us.
 ## Dev Setup
 
 - `pip install -r requirements.txt`
+- create new database for django
 - run your database and redis
 - add env variables: `DATABASE_URL`, `REDIS_URL`, `DJANGO_SETTINGS_MODULE=appdj.settings.dev`
-- run `python manage.py migrate --fake-initial`
+- add env variable for hubserver database `OLD_DATABASE_URL`
+- run `python manage.py migrate`
+- run `python manage.py migrate_data $OLD_DATABASE_URL`
 - run `python manage.py runserver`
 - go to [http://localhost:8000/swagger/](http://localhost:8000/swagger/)
 

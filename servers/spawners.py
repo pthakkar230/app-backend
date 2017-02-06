@@ -51,7 +51,7 @@ class DockerSpawner(ServerSpawner):
         self.cmd = None
         self.entry_point = None
         self.restart = None
-        self.network_name = 'project_{}_network'.format(self.server.server.project.hashid)
+        self.network_name = 'project_{}_network'.format(self.server.server.project.pk)
 
     def _get_envs(self) -> dict:
         all_env_vars = {}

@@ -40,11 +40,11 @@ project_router.register(r'models', servers_views.ModelViewSet)
 project_router.register(r'jobs', servers_views.JobViewSet)
 project_router.register(r'data-sources', servers_views.DataSourceViewSet)
 project_router.register(r'files', project_views.FileViewSet)
-project_router.register(r'(?P<server_type>workspaces|models|jobs|data-sources)/(?P<server_pk>\w+)/ssh-tunnels',
+project_router.register(r'(?P<server_type>workspaces|models|jobs|data-sources)/(?P<server_pk>[^/.]+)/ssh-tunnels',
                         servers_views.SshTunnelViewSet)
-project_router.register(r'(?P<server_type>workspaces|models|jobs|data-sources)/(?P<server_pk>\w+)/run-stats',
+project_router.register(r'(?P<server_type>workspaces|models|jobs|data-sources)/(?P<server_pk>[^/.]+)/run-stats',
                         servers_views.ServerRunStatisticsViewSet)
-project_router.register(r'(?P<server_type>workspaces|models|jobs|data-sources)/(?P<server_pk>\w+)/stats',
+project_router.register(r'(?P<server_type>workspaces|models|jobs|data-sources)/(?P<server_pk>[^/.]+)/stats',
                         servers_views.ServerStatisticsViewSet)
 project_router.register(r'collaborators', project_views.CollaboratorViewSet)
 
