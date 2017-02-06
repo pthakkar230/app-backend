@@ -12,6 +12,7 @@ python:
 branches:
   only:
     - master
+    - staging
 services:
 # enable docker service inside travis
   - docker
