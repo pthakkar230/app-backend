@@ -48,7 +48,7 @@ project_router.register(r'(?P<server_type>workspaces|models|jobs|data-sources)/(
                         servers_views.ServerStatisticsViewSet)
 project_router.register(r'collaborators', project_views.CollaboratorViewSet)
 
-schema_view = get_swagger_view(title='3blades API')
+schema_view = get_swagger_view(title='3blades API', url=settings.FORCE_SCRIPT_NAME)
 
 urlpatterns = [
     url(r'^swagger/$', schema_view),
