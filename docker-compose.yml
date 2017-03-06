@@ -1,0 +1,53 @@
+version: '2'
+services:
+  api:
+    build: .
+    command: /srv/env/bin/gunicorn --bind 0.0.0.0:80 --reload --workers 1 --log-level=DEBUG --error-logfile=- --access-logfile=- appdj.wsgi
+    volumes:
+      - .:/srv/app
+      - /workspaces:/workspaces
+    env_file: env
+    depends_on:
+      - db
+      - cache
+      - broker
+  celery:
+    build: .
+    command: /srv/env/bin/celery -A appdj worker -l info
+    volumes:
+      - .:/srv/app
+      - /workspaces:/workspaces
+    env_file: env
+    depends_on:
+      - db
+      - cache
+      - broker
+  db:
+    image: postgres:alpine
+    ports:
+      - "5432:5432"
+  broker:
+    image: rabbitmq:alpine
+    ports:
+      - "5672:5672"
+  cache:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  server:
+    build: ../openresty
+    command: -p '' -c nginx.conf -g 'daemon off;'
+    ports:
+      - "5000:80"
+    depends_on:
+      - api
+    volumes_from:
+      - api
+  logspout:
+    image: gliderlabs/logspout
+    env_file: env
+  notifications-server:
+    build: ../notifications-server
+    ports:
+      - "3000:3000"
+    env_file: env

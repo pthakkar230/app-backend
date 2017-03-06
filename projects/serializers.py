@@ -1,14 +1,16 @@
 import base64
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from pathlib import Path
 from rest_framework import serializers
+from social_django.models import UserSocialAuth
 
-from base.serializers import HashIDSerializer
 from users.serializers import UserSerializer
-from .models import Project, File, ProjectUsers
+from .models import Project, File, Collaborator, SyncedResource
 
 
-class ProjectSerializer(HashIDSerializer):
+class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ('id', 'name', 'description', 'private', 'last_updated')
@@ -16,11 +18,12 @@ class ProjectSerializer(HashIDSerializer):
     def create(self, validated_data):
         project = super().create(validated_data)
         request = self.context['request']
-        ProjectUsers.objects.create(project=project, owner=True, user=request.user)
+        Collaborator.objects.create(project=project, owner=True, user=request.user)
+        Path(settings.RESOURCE_DIR, project.get_owner_name(), str(project.pk)).mkdir(parents=True, exist_ok=True)
         return project
 
 
-class FileAuthorSerializer(HashIDSerializer):
+class FileAuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('id', 'email', 'username')
@@ -35,7 +38,7 @@ class Base64CharField(serializers.CharField):
         return base64.b64decode(data)
 
 
-class FileSerializer(HashIDSerializer):
+class FileSerializer(serializers.ModelSerializer):
     content = Base64CharField()
     size = serializers.IntegerField(read_only=True)
 
@@ -65,9 +68,26 @@ class FileSerializer(HashIDSerializer):
         return instance
 
 
-class CollaboratorSerializer(HashIDSerializer):
+class CollaboratorSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
-        model = ProjectUsers
+        model = Collaborator
         fields = ('id', 'owner', 'joined', 'user')
+
+
+class SyncedResourceSerializer(serializers.ModelSerializer):
+    provider = serializers.CharField(source='integration.provider')
+
+    class Meta:
+        model = SyncedResource
+        fields = ('folder', 'settings', 'provider')
+
+    def create(self, validated_data):
+        provider = validated_data.pop('integration').get('provider')
+        instance = SyncedResource(**validated_data)
+        integration = UserSocialAuth.objects.filter(user=self.context['request'].user, provider=provider).first()
+        instance.integration = integration
+        instance.project_id = self.context['view'].kwargs['project_pk']
+        instance.save()
+        return instance

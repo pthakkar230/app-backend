@@ -1,36 +1,44 @@
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.urls import reverse
+from social_django.models import UserSocialAuth
 
-from base.models import HashIDMixin
+from base.namespace import Namespace
 
 
 class ProjectQuerySet(models.QuerySet):
     def namespace(self, namespace):
-        return self.filter(projectusers__user=namespace.object)
+        return self.filter(collaborator__user=namespace.object)
 
 
-class Project(HashIDMixin, models.Model):
+class Project(models.Model):
     name = models.CharField(max_length=50)
-    description = models.CharField(max_length=400, blank=True, null=True)
+    description = models.CharField(max_length=400, blank=True)
     private = models.BooleanField(default=True)
-    last_updated = models.DateTimeField(auto_now=True, blank=True, null=True)
-    collaborators = models.ManyToManyField(settings.AUTH_USER_MODEL, through='ProjectUsers', related_name='projects')
+    last_updated = models.DateTimeField(auto_now=True)
+    collaborators = models.ManyToManyField(settings.AUTH_USER_MODEL, through='Collaborator', related_name='projects')
+    integrations = models.ManyToManyField(UserSocialAuth, through='SyncedResource', related_name='projects')
 
     objects = ProjectQuerySet.as_manager()
-
-    class Meta:
-        db_table = 'project'
 
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self, namespace: Namespace):
+        return reverse('project-detail', kwargs={'namespace': namespace.name, 'pk': str(self.id)})
+
+    @property
     def owner(self):
-        return self.projectusers_set.filter(owner=True).first().user
+        return self.collaborator_set.filter(owner=True).first().user
 
     def get_owner_name(self):
-        return self.owner().username
+        return self.owner.username
+
+    def resource_root(self):
+        return Path(settings.RESOURCE_DIR, self.get_owner_name(), str(self.pk))
 
 
 class ProjectUsersQuerySet(models.QuerySet):
@@ -38,18 +46,13 @@ class ProjectUsersQuerySet(models.QuerySet):
         return self.filter(user=namespace.object)
 
 
-class ProjectUsers(models.Model):
-    id = models.AutoField(primary_key=True)
+class Collaborator(models.Model):
     project = models.ForeignKey(Project, models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, models.DO_NOTHING)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE)
     joined = models.DateTimeField(auto_now_add=True)
     owner = models.BooleanField(default=False)
 
     objects = ProjectUsersQuerySet.as_manager()
-
-    class Meta:
-        db_table = 'projects_users'
-        unique_together = (('project', 'user'),)
 
 
 class FileQuerySet(models.QuerySet):
@@ -57,7 +60,7 @@ class FileQuerySet(models.QuerySet):
         return self.filter(author__username=namespace.name)
 
 
-class File(HashIDMixin, models.Model):
+class File(models.Model):
     path = models.CharField(max_length=255)
     encoding = models.CharField(max_length=20)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, models.DO_NOTHING, related_name='files')
@@ -76,9 +79,15 @@ class File(HashIDMixin, models.Model):
             self.sys_path.write_bytes(content)
         super().save(**kwargs)
 
+    def get_absolute_url(self, namespace):
+        return reverse(
+            'file-detail',
+            kwargs={'namespace': namespace.name, 'project_pk': str(self.project.pk), 'pk': str(self.pk)}
+        )
+
     @property
     def sys_path(self):
-        return Path(settings.RESOURCE_DIR, self.author.username, self.project.hashid, self.path)
+        return self.project.resource_root().joinpath(self.path)
 
     def content(self):
         return self.sys_path.read_bytes()
@@ -89,3 +98,17 @@ class File(HashIDMixin, models.Model):
     def delete(self, using=None, keep_parents=False):
         self.sys_path.unlink()
         return super().delete(using, keep_parents)
+
+
+class SyncedResourceQuerySet(models.QuerySet):
+    def namespace(self, namespace):
+        return self.filter(project__collaborator__user=namespace.object)
+
+
+class SyncedResource(models.Model):
+    project = models.ForeignKey(Project, models.CASCADE, related_name='synced_resources')
+    integration = models.ForeignKey(UserSocialAuth, models.CASCADE)
+    folder = models.CharField(max_length=50)
+    settings = JSONField(default={})
+
+    objects = SyncedResourceQuerySet.as_manager()

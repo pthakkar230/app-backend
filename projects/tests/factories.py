@@ -1,7 +1,7 @@
 import factory
 
 from users.tests.factories import UserFactory
-from ..models import Project, ProjectUsers, File
+from ..models import Project, Collaborator, File
 
 
 class ProjectFactory(factory.django.DjangoModelFactory):
@@ -14,7 +14,7 @@ class ProjectFactory(factory.django.DjangoModelFactory):
 
 class CollaboratorFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = ProjectUsers
+        model = Collaborator
 
     user = factory.SubFactory(UserFactory)
     project = factory.SubFactory(ProjectFactory)

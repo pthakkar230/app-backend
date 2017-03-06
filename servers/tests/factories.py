@@ -1,10 +1,11 @@
 import random
 import factory
 from django.utils import timezone
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from projects.tests.factories import ProjectFactory
 from servers import models
+from users.tests.factories import UserFactory
 
 
 class EnvironmentTypeFactory(factory.django.DjangoModelFactory):
@@ -13,7 +14,7 @@ class EnvironmentTypeFactory(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'project_{}'.format(n))
     image_name = '3blades/ipython-notebook'
-    cmd = ''
+    cmd = '/runner -type=http'
 
 
 class EnvironmentResourcesFactory(factory.django.DjangoModelFactory):
@@ -36,32 +37,7 @@ class ServerFactory(factory.django.DjangoModelFactory):
     environment_type = factory.SubFactory(EnvironmentTypeFactory)
     environment_resources = factory.SubFactory(EnvironmentResourcesFactory)
     project = factory.SubFactory(ProjectFactory)
-
-
-class WorkspaceFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.Workspace
-
-    server = factory.SubFactory(ServerFactory)
-
-
-class ModelFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.Model
-
-    server = factory.SubFactory(ServerFactory)
-    script = 'test.py'
-    method = 'test'
-
-
-class JobFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.Job
-
-    server = factory.SubFactory(ServerFactory)
-    script = 'test.py'
-    method = 'test'
-    schedule = '* * * * *'
+    created_by = factory.SubFactory(UserFactory)
 
 
 class ServerRunStatisticsFactory(factory.django.DjangoModelFactory):
@@ -83,6 +59,7 @@ class ServerStatisticsFactory(factory.django.DjangoModelFactory):
     stop = timezone.now()
     size = 0
 
+
 class SSHTunnelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.SshTunnel
@@ -93,11 +70,4 @@ class SSHTunnelFactory(factory.django.DjangoModelFactory):
     endpoint = factory.Faker('domain_name')
     remote_port = factory.Faker('pyint')
     username = factory.Faker('user_name')
-    server = factory.SubFactory(ServerFactory)
-
-
-class DataSourceFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.DataSource
-
     server = factory.SubFactory(ServerFactory)

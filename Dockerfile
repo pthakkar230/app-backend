@@ -1,39 +1,27 @@
-FROM ubuntu:16.04
+FROM python:alpine
 
 MAINTAINER 3Blades <contact@3blades.io>
 
-RUN locale-gen en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+RUN apk update \
+ && apk upgrade \
+ && apk add --no-cache \
+    build-base \
+    postgresql-dev \
+    libffi-dev
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -yq --no-install-recommends \
-    build-essential \
-    git \
-    libffi-dev \
-    libpq-dev \
-    libssl-dev \
-    python3.5 \
-    python3.5-dev \
-    libmagic-dev \
-    virtualenv && \
-    apt-get clean && \
-    apt-get autoclean && \
-    apt-get autoremove
+RUN pip install virtualenv
 
 RUN mkdir -p /srv/
 WORKDIR /srv/
-RUN virtualenv env --python=/usr/bin/python3.5
-RUN . env/bin/activate; pip install --upgrade setuptools pip wheel
+RUN virtualenv env --python=python3
+RUN . env/bin/activate; pip --no-cache-dir install --upgrade setuptools pip wheel
 
 WORKDIR /srv/app/
 
 ADD requirements/ /srv/app/requirements
 
 # install requirements to run hub server
-RUN . ../env/bin/activate; pip install -r requirements/dev.txt
+RUN . ../env/bin/activate; pip --no-cache-dir install -r requirements/dev.txt
 
 ADD . /srv/app
 

@@ -6,24 +6,83 @@
 [![Requirements Status](https://requires.io/github/3Blades/app-backend/requirements.svg?branch=master)](https://requires.io/github/3Blades/app-backend/requirements/?branch=master)
 [![slack in](https://slackin-pypmyuhqds.now.sh/badge.svg)](https://slackin-pypmyuhqds.now.sh/)
 
-# app-backend
+# 3Blades Backend Server
 #
 
-Application server backend. Replaces hubserver.
+Application server backend based on [Django](https://www.djangoproject.com/).
 
-Refer to [docs repo](https://github.com/3blades/docs) for installation instructions.
-
-This project enforces the [Contributor Covenant](./CODE_OF_CONDUCT.md). Be kind
-and build a nice open source community with us.
+Refer to [docs repo](https://github.com/3blades/docs) for full stack installation instructions.
 
 ## Dev Setup
 
-- `pip install -r requirements.txt`
-- run your database and redis
-- add env variables: `DATABASE_URL`, `REDIS_URL`, `DJANGO_SETTINGS_MODULE=appdj.settings.dev`
-- run `python manage.py migrate --fake-initial`
-- run `python manage.py runserver`
-- go to [http://localhost:8000/swagger/](http://localhost:8000/swagger/)
+Requirements:
+
+- [Python 3.6](https://www.python.org/downloads/release/python-360/)
+- (Optional) [Virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
+- (Optional) [Docker](https://docs.docker.com/engine/installation/)
+
+> Pro Tip! Use XYZ to install Python 3.6 on Linux systems.
+
+We recommend using [Docker](https://docs.docker.com/engine/installation/) to run [Postgres](https://hub.docker.com/_/postgres/) and [Redis](https://hub.docker.com/_/redis/).
+
+If you prefer, you can install [Postgres](https://www.postgresql.org/docs/current/static/tutorial-install.html) and [Redis](https://redis.io/topics/quickstart) directly on your host.
+
+Install dependencies:
+
+    pip install -r ./requirements/dev.txt
+
+Run Postgres:
+
+    docker run --name my-postgres -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+
+Run Redis:
+
+    docker run --name my-redis -p 6379:6379 -d redis
+
+Verify docker runs:
+
+```
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+e6c4011e0c3e        redis               "docker-entrypoint..."   4 seconds ago       Up 2 seconds        0.0.0.0:6379->6379/tcp   my-redis
+057c41df17c8        postgres            "docker-entrypoint..."   12 seconds ago      Up 10 seconds       0.0.0.0:5432->5432/tcp   my-postgres
+```
+
+Export environment variables: `DATABASE_URL`, `REDIS_URL`, `DJANGO_SETTINGS_MODULE=appdj.settings.dev`. For example:
+
+    export DATABASE_URL='postgres://postgres:mysecretpassword@localhost:5432/'
+    export REDIS_URL='redis://localhost:6379/0'
+    export DJANGO_SETTINGS_MODULE='appdj.settings.dev'
+
+Run database migrations:
+
+    python manage.py migrate
+
+Create admin (superuser) user:
+
+    python manage.py createsuperuser
+
+Run application:
+
+    python manage.py runserver
+
+Access API docs page and login:
+
+    http://localhost:8000/swagger/
+
+## Run Tests
+
+Update Django settings so that it uses `test` module:
+
+    export DJANGO_SETTINGS_MODULE=appdj.settings.test
+
+Run tests:
+
+    python manage.py test
+
+## Contributing
+
+This project enforces the [Contributor Covenant](./CODE_OF_CONDUCT.md). Be kind
+and build a nice open source community with us.
 
 
 ## Copyright and license

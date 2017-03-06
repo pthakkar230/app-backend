@@ -1,77 +1,39 @@
 from rest_framework import serializers
 
-from base.serializers import HashIDSerializer
 from . import models
 
 
-class ServerCreateMixin(object):
-    def create(self, validated_data):
-        server_data = validated_data.pop('server')
-        view = self.context['view']
-        project_pk = view.kwargs['project_pk']
-        server = models.Server.objects.create(project_id=project_pk, **server_data)
-        concrete = self.Meta.model.objects.create(server=server, **validated_data)
-        return concrete
-
-    def update(self, instance, validated_data):
-        server_data = validated_data.pop('server', {})
-        for key in server_data:
-            setattr(instance.server, key, server_data[key])
-        instance.server.save(update_fields=server_data.keys())
-        return super().update(instance, validated_data)
-
-
-class EnvironmentTypeSerializer(HashIDSerializer):
+class EnvironmentTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnvironmentType
-        fields = ('id', 'name', 'image_name', 'cmd')
+        fields = ('id', 'name', 'image_name', 'cmd', 'work_dir', 'container_path', 'container_port')
 
 
-class EnvironmentResourceSerializer(HashIDSerializer):
+class EnvironmentResourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnvironmentResource
         fields = ('id', 'name', 'cpu', 'memory', 'active')
 
 
-class ServerSerializer(HashIDSerializer):
+class ServerSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(read_only=False, required=False)
+
     class Meta:
         model = models.Server
-        fields = ('id', 'name', 'created_at', 'environment_type', 'environment_resources', 'startup_script')
+        fields = ('id', 'name', 'created_at', 'environment_type', 'environment_resources', 'startup_script', 'config',
+                  'status', 'connected')
         read_only_fields = ('created_at',)
+        extra_kwargs = {'connected': {'allow_empty': True}}
+
+    def create(self, validated_data):
+        return models.Server.objects.create(
+            project_id=self.context['view'].kwargs['project_pk'],
+            created_by=self.context['request'].user,
+            **validated_data
+        )
 
 
-class ConcreteServerSerializer(ServerCreateMixin, serializers.ModelSerializer):
-    server = ServerSerializer()
-
-    class Meta:
-        fields = ('server', 'status')
-
-
-class WorkspaceSerializer(ConcreteServerSerializer):
-    class Meta:
-        model = models.Workspace
-        fields = ConcreteServerSerializer.Meta.fields
-
-
-class ModelSerializer(ConcreteServerSerializer):
-    class Meta:
-        model = models.Model
-        fields = ConcreteServerSerializer.Meta.fields + ('script', 'method')
-
-
-class JobSerializer(ConcreteServerSerializer):
-    class Meta:
-        model = models.Job
-        fields = ConcreteServerSerializer.Meta.fields + ('script', 'method')
-
-
-class DataSourceSerializer(ConcreteServerSerializer):
-    class Meta:
-        model = models.DataSource
-        fields = ConcreteServerSerializer.Meta.fields
-
-
-class ServerRunStatisticsSerializer(HashIDSerializer):
+class ServerRunStatisticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ServerRunStatistics
         fields = ('id', 'start', 'stop', 'exit_code', 'size', 'stacktrace')
@@ -84,7 +46,7 @@ class ServerRunStatisticsAggregatedSerializer(serializers.Serializer):
     stop = serializers.DateTimeField()
 
 
-class ServerStatisticsSerializer(HashIDSerializer):
+class ServerStatisticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ServerStatistics
         fields = ('id', 'start', 'stop', 'size')
@@ -96,7 +58,7 @@ class ServerStatisticsAggregatedSerializer(serializers.Serializer):
     stop = serializers.DateTimeField()
 
 
-class SshTunnelSerializer(HashIDSerializer):
+class SshTunnelSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.SshTunnel
         fields = ('id', 'name', 'host', 'local_port', 'remote_port', 'endpoint', 'username')

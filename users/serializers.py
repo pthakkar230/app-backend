@@ -1,10 +1,11 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.authtoken.serializers import AuthTokenSerializer as RestAuthTokenSerializer
 from rest_framework.authtoken.models import Token
+from social_django.models import UserSocialAuth
 
-from base.serializers import HashIDSerializer
 from base.views import RequestUserMixin
-from .models import UserProfile, Email, Integration
+from .models import UserProfile, Email
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -13,7 +14,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('avatar_url', 'bio', 'url', 'location', 'company', 'timezone')
 
 
-class UserSerializer(HashIDSerializer):
+class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer()
 
     class Meta:
@@ -49,7 +50,13 @@ class EmailSerializer(RequestUserMixin, serializers.ModelSerializer):
         fields = ('address', 'public', 'unsubscribed')
 
 
-class IntegrationSerializer(HashIDSerializer):
+class IntegrationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Integration
-        fields = ('id', 'integration_email', 'scopes', 'provider')
+        model = UserSocialAuth
+        fields = ('provider', 'extra_data')
+
+
+class AuthTokenSerializer(RestAuthTokenSerializer):
+    username = serializers.CharField(label="Username", write_only=True)
+    password = serializers.CharField(label="Password", style={'input_type': 'password'}, write_only=True)
+    token = serializers.CharField(label="Token", read_only=True)

@@ -1,32 +1,39 @@
 from unittest.mock import patch
 
-from django.test import TestCase
+from rest_framework.authtoken.models import Token
+from django.test import TransactionTestCase
 
 from projects.tests.factories import CollaboratorFactory
 from servers.tests.fake_docker_api_client.fake_api import FAKE_CONTAINER_ID
-from ..models import Model
+from ..models import Server
 from ..spawners import DockerSpawner
-from .factories import ModelFactory, EnvironmentTypeFactory, EnvironmentResourcesFactory
+from .factories import EnvironmentTypeFactory, EnvironmentResourcesFactory, ServerFactory
 from .fake_docker_api_client.fake_api_client import make_fake_client
 
 
-class TestDockerSpawnerForModel(TestCase):
+class TestDockerSpawnerForModel(TransactionTestCase):
     def setUp(self):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
-        self.server = ModelFactory(
-            server__environment_type=EnvironmentTypeFactory(
+        self.token = Token.objects.create(user=self.user)
+        self.server = ServerFactory(
+            environment_type=EnvironmentTypeFactory(
                 image_name='test',
-                cmd='{model.hashid}|from {model.script:.{script_name_len}} import {model.method}',
+                cmd='/runner -kernel=python3 -type=http -code="from {module} import {method}"',
                 work_dir='/test',
                 env_vars={'test': 'test', 'test2': '{server.name}'},
                 container_path='/resources',
                 container_port=8000
             ),
-            server__environment_resources=EnvironmentResourcesFactory(
+            environment_resources=EnvironmentResourcesFactory(
                 memory=512
             ),
-            server__project=collaborator.project)
+            project=collaborator.project,
+            config={
+                'method': 'test',
+                'module': 'test'
+            }
+        )
         docker_client = make_fake_client()
         self.spawner = DockerSpawner(self.server, docker_client)
 
@@ -34,15 +41,23 @@ class TestDockerSpawnerForModel(TestCase):
         expected = {
             'test': 'test',
             'TZ': 'UTC',
-            'test2': self.server.server.name
+            'test2': self.server.name
         }
         self.assertEqual(self.spawner._get_envs(), expected)
 
     @patch('servers.spawners.DockerSpawner._get_container')
-    def test_launch(self, _get_container):
+    def test_start(self, _get_container):
         _get_container.return_value = None
-        self.spawner.launch(**self.server.get_start_kwargs())
-        self.assertEqual(self.server.server.container_id, FAKE_CONTAINER_ID)
+        self.spawner.start()
+        self.assertEqual(self.server.container_id, FAKE_CONTAINER_ID)
+
+    def test_get_cmd(self):
+        cmd = self.spawner._get_cmd()
+        self.assertIn("runner", cmd)
+        self.assertIn(self.token.key, cmd)
+        self.assertIn(self.user.username, cmd)
+        self.assertIn(str(self.server.project.pk), cmd)
+        self.assertIn(str(self.server.pk), cmd)
 
     @patch('servers.spawners.DockerSpawner._is_swarm')
     def test_get_host_config(self, _is_swarm):
@@ -58,11 +73,11 @@ class TestDockerSpawnerForModel(TestCase):
         self.assertDictEqual(expected, self.spawner._get_host_config())
 
     def test_status(self):
-        self.assertEqual(Model.RUNNING, self.spawner.status())
+        self.assertEqual(Server.RUNNING, self.spawner.status())
 
     def test_create_container(self):
         self.spawner._create_container()
-        self.assertTrue(bool(self.server.server.container_id))
+        self.assertTrue(bool(self.server.container_id))
 
     @patch('servers.spawners.DockerSpawner._get_envs')
     @patch('servers.spawners.DockerSpawner._get_host_config')

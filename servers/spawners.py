@@ -5,6 +5,7 @@ import tarfile
 from io import BytesIO
 from pathlib import Path
 
+from django.contrib.sites.models import Site
 from django.utils.functional import cached_property
 from docker import from_env
 from docker.errors import APIError
@@ -23,7 +24,7 @@ class ServerSpawner(object):
         self.server = server
 
     @abc.abstractmethod
-    def launch(self, **kwargs) -> None:
+    def start(self, **kwargs) -> None:
         return None
 
     @abc.abstractmethod
@@ -46,25 +47,25 @@ class DockerSpawner(ServerSpawner):
     def __init__(self, server, client=None):
         super().__init__(server)
         self.client = client or from_env()
-        self.container_port = self.server.server.environment_type.container_port
+        self.container_port = self.server.environment_type.container_port
         self.container_id = ''
         self.cmd = None
         self.entry_point = None
         self.restart = None
-        self.network_name = 'project_{}_network'.format(self.server.server.project.hashid)
+        self.network_name = 'project_{}_network'.format(self.server.project.pk)
 
     def _get_envs(self) -> dict:
         all_env_vars = {}
-        env_vars = self.server.server.environment_type.env_vars or {}
+        env_vars = self.server.environment_type.env_vars or {}
         # get user defined env vars
-        all_env_vars.update(self.server.server.env_vars or {})
+        all_env_vars.update(self.server.env_vars or {})
         # get admin defined env vars
-        all_env_vars.update({key: val.format(server=self.server.server) for key, val in env_vars.items()})
+        all_env_vars.update({key: val.format(server=self.server) for key, val in env_vars.items()})
         all_env_vars['TZ'] = self._get_user_timezone()
         logger.info("Environment variables to create a container:'{}'".format(env_vars))
         return all_env_vars
 
-    def launch(self, entry_point=None, command=None, restart=None) -> None:
+    def start(self, entry_point=None, command=None, restart=None) -> None:
         self.entry_point = entry_point
         self.cmd = self._get_cmd(command=command)
         self.restart = restart
@@ -84,40 +85,47 @@ class DockerSpawner(ServerSpawner):
             self._set_ip_and_port()
 
         except Exception:
-            self.server.server.status = self.server.ERROR
+            self.server.status = self.server.ERROR
             raise  # this is part of celery task, we need to know if it fails
 
     def _get_cmd(self, command=None):
         if not command:
-            return self.server.server.environment_type.cmd.format(
-                server=self.server) if self.server.server.environment_type.cmd else ''
+            command = '''-key={server.project.owner.auth_token.key} -ns={server.project.owner.username}
+            -projectID={server.project.pk} -serverID={server.pk} -root={domain}'''.format(
+                server=self.server,
+                domain=Site.objects.get_current()
+            )
+            cmd = self.server.environment_type.cmd.format(**self.server.config).split(' ', 1)
+            cmd.insert(1, command)
+            cmd = ' '.join(cmd)
+            return cmd
         return command
 
     def _get_host_config(self):
-        binds = ['{}:{}'.format(self.server.volume_path, self.server.server.environment_type.container_path)]
+        binds = ['{}:{}'.format(self.server.volume_path, self.server.environment_type.container_path)]
         ssh_path = self._get_ssh_path()
         if ssh_path:
-            binds.append('{}:{}/.ssh'.format(ssh_path, self.server.server.environment_type.container_path))
-        if self.server.server.startup_script:
+            binds.append('{}:{}/.ssh'.format(ssh_path, self.server.environment_type.container_path))
+        if self.server.startup_script:
             binds.append('{}:/start.sh'.format(
-                str(Path(self.server.volume_path).joinpath(self.server.server.startup_script))))
+                str(Path(self.server.volume_path).joinpath(self.server.startup_script))))
         config = dict(
-            mem_limit='{}m'.format(self.server.server.environment_resources.memory),
+            mem_limit='{}m'.format(self.server.environment_resources.memory),
             port_bindings={self.container_port: None},
             binds=binds,
             restart_policy=self.restart,
         )
         if not self._is_swarm:
-            config['links'] = self._data_sources_links()
+            config['links'] = self._connected_links()
         return config
 
     def _prepare_tar_file(self):
         tar_stream = BytesIO()
         tar = tarfile.TarFile.xzopen(name="server.tar.xz", fileobj=tar_stream, mode="w")
-        tar.add(self.server.volume_path, arcname=self.server.server.environment_type.container_path)
+        tar.add(self.server.volume_path, arcname=self.server.environment_type.container_path)
         ssh_path = self._get_ssh_path()
         if ssh_path:
-            tar.add(ssh_path, arcname=self.server.server.environment_type.container_path)
+            tar.add(ssh_path, arcname=self.server.environment_type.container_path)
         tar.close()
         tar_stream.seek(0)
         return tar_stream
@@ -131,18 +139,18 @@ class DockerSpawner(ServerSpawner):
         if not docker_resp:
             raise TypeError('Unexpected empty value when trying to create a container')
         self.container_id = docker_resp['Id']
-        self.server.server.container_id = self.container_id
-        self.server.server.save()
+        self.server.container_id = self.container_id
+        self.server.save()
         logger.info("Container created '{}', id:{}".format(self.server.container_name, self.container_id))
 
     def _create_container_config(self):
         config = dict(
-            image=self.server.server.environment_type.image_name,
+            image=self.server.environment_type.image_name,
             command=self.cmd,
             environment=self._get_envs(),
             name=self.server.container_name,
             host_config=self.client.create_host_config(**self._get_host_config()),
-            working_dir=self.server.server.environment_type.work_dir,
+            working_dir=self.server.environment_type.work_dir,
             ports=[self.container_port],
             cpu_shares=0,
         )
@@ -153,11 +161,9 @@ class DockerSpawner(ServerSpawner):
         return config
 
     def _create_network_config(self):
-        config = {}
-        if self.server.server.type == self.server.DATA_SOURCE:
-            config['aliases'] = [self.server.server.name]
-        else:
-            config['links'] = self._data_sources_links()
+        config = {'aliases': [self.server.name]}
+        if self.server.connected.exists():
+            config['links'] = self._connected_links()
         return self.client.create_networking_config({
             self.network_name: self.client.create_endpoint_config(
                 **config
@@ -255,19 +261,19 @@ class DockerSpawner(ServerSpawner):
 
     def _compare_container_env(self, container) -> bool:
         old_envs = dict(env.split("=", maxsplit=1) for env in container.get('Config', {}).get('Env', []))
-        return all(old_envs.get(key) == val for key, val in (self.server.server.env_vars or {}).items())
+        return all(old_envs.get(key) == val for key, val in (self.server.env_vars or {}).items())
 
     def _get_user_timezone(self):
         tz = 'UTC'
-        project = self.server.server.project
-        owner = project.owner()
-        if owner.profile.timezone:
+        project = self.server.project
+        owner = project.owner
+        if owner.profile and owner.profile.timezone:
             tz = owner.profile.timezone
         return tz
 
-    def _data_sources_links(self):
+    def _connected_links(self):
         links = {}
-        for source in self.server.server.data_sources.all():
+        for source in self.server.connected.all():
             if not source.is_running():
                 DockerSpawner(source).launch()
             links[source.container_name] = source.name.lower()
@@ -300,7 +306,7 @@ class ServerDummySpawner(ServerSpawner):
     def status(self) -> str:
         return 'running'
 
-    def launch(self, **kwargs):
+    def start(self, **kwargs):
         self.server.status = self.server.RUNNING
         return None
 
