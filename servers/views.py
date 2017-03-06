@@ -1,32 +1,42 @@
-from django.db.models import F
-from django.db.models import Sum, Count, Max
-from django.db.models.functions import Coalesce
-from django.db.models.functions import Now
-from rest_framework import viewsets
+from django.db.models import Sum, Count, Max, F
+from django.db.models.functions import Coalesce, Now
+from rest_framework import status, views, viewsets
+from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
-from base.views import ServersMixin, ProjectMixin, ServerMixin
+from base.views import ProjectMixin, UUIDRegexMixin, ServerMixin
+from projects.models import Project
+from .tasks import start_server, stop_server, terminate_server
 from . import serializers, models
 
 
-class WorkspaceViewSet(ServersMixin, viewsets.ModelViewSet):
-    queryset = models.Workspace.objects.all()
-    serializer_class = serializers.WorkspaceSerializer
+class ServerViewSet(viewsets.ModelViewSet):
+    queryset = models.Server.objects.all()
+    serializer_class = serializers.ServerSerializer
 
+    @detail_route(methods=['post'])
+    def start(self, request, *args, **kwargs):
+        start_server.apply_async(
+            args=[kwargs.get('pk')],
+            task_id=str(request.action.pk)
+        )
+        return Response(status=status.HTTP_202_ACCEPTED)
 
-class ModelViewSet(ServersMixin, viewsets.ModelViewSet):
-    queryset = models.Model.objects.select_related('server')
-    serializer_class = serializers.ModelSerializer
+    @detail_route(methods=['post'])
+    def stop(self, request, *args, **kwargs):
+        stop_server.apply_async(
+            args=[kwargs.get('pk')],
+            task_id=str(request.action.pk)
+        )
+        return Response(status=status.HTTP_202_ACCEPTED)
 
-
-class JobViewSet(ServersMixin, viewsets.ModelViewSet):
-    queryset = models.Job.objects.all()
-    serializer_class = serializers.JobSerializer
-
-
-class DataSourceViewSet(ServersMixin, viewsets.ModelViewSet):
-    queryset = models.DataSource.objects.all()
-    serializer_class = serializers.DataSourceSerializer
+    @detail_route(methods=['post'])
+    def terminate(self, request, *args, **kwargs):
+        terminate_server.apply_async(
+            args=[kwargs.get('pk')],
+            task_id=str(request.action.pk)
+        )
+        return Response(status=status.HTTP_202_ACCEPTED)
 
 
 class ServerRunStatisticsViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):
@@ -63,11 +73,24 @@ class SshTunnelViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):
     serializer_class = serializers.SshTunnelSerializer
 
 
-class EnvironmentTypeViewSet(viewsets.ModelViewSet):
+class EnvironmentTypeViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
     queryset = models.EnvironmentType.objects.all()
     serializer_class = serializers.EnvironmentTypeSerializer
 
 
-class EnvironmentResourceViewSet(viewsets.ModelViewSet):
+class EnvironmentResourceViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
     queryset = models.EnvironmentResource.objects.all()
     serializer_class = serializers.EnvironmentResourceSerializer
+
+
+class IsAllowed(views.APIView):
+    """
+    Checks if user is allowed to access model server
+    """
+
+    def get(self, request, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION', '').split(' ')[1]
+        if Project.objects.cache().only('pk').filter(
+                pk=kwargs.get('project_pk', ''), collaborators__auth_token__key=token).exists():
+            return Response()
+        return Response(status=status.HTTP_404_NOT_FOUND)

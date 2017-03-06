@@ -1,7 +1,12 @@
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.urls import reverse
+from social_django.models import UserSocialAuth
+
+from base.namespace import Namespace
 
 
 class ProjectQuerySet(models.QuerySet):
@@ -15,17 +20,25 @@ class Project(models.Model):
     private = models.BooleanField(default=True)
     last_updated = models.DateTimeField(auto_now=True)
     collaborators = models.ManyToManyField(settings.AUTH_USER_MODEL, through='Collaborator', related_name='projects')
+    integrations = models.ManyToManyField(UserSocialAuth, through='SyncedResource', related_name='projects')
 
     objects = ProjectQuerySet.as_manager()
 
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self, namespace: Namespace):
+        return reverse('project-detail', kwargs={'namespace': namespace.name, 'pk': str(self.id)})
+
+    @property
     def owner(self):
         return self.collaborator_set.filter(owner=True).first().user
 
     def get_owner_name(self):
-        return self.owner().username
+        return self.owner.username
+
+    def resource_root(self):
+        return Path(settings.RESOURCE_DIR, self.get_owner_name(), str(self.pk))
 
 
 class ProjectUsersQuerySet(models.QuerySet):
@@ -66,9 +79,15 @@ class File(models.Model):
             self.sys_path.write_bytes(content)
         super().save(**kwargs)
 
+    def get_absolute_url(self, namespace):
+        return reverse(
+            'file-detail',
+            kwargs={'namespace': namespace.name, 'project_pk': str(self.project.pk), 'pk': str(self.pk)}
+        )
+
     @property
     def sys_path(self):
-        return Path(settings.RESOURCE_DIR, self.author.username, str(self.project.pk), self.path)
+        return self.project.resource_root().joinpath(self.path)
 
     def content(self):
         return self.sys_path.read_bytes()
@@ -79,3 +98,17 @@ class File(models.Model):
     def delete(self, using=None, keep_parents=False):
         self.sys_path.unlink()
         return super().delete(using, keep_parents)
+
+
+class SyncedResourceQuerySet(models.QuerySet):
+    def namespace(self, namespace):
+        return self.filter(project__collaborator__user=namespace.object)
+
+
+class SyncedResource(models.Model):
+    project = models.ForeignKey(Project, models.CASCADE, related_name='synced_resources')
+    integration = models.ForeignKey(UserSocialAuth, models.CASCADE)
+    folder = models.CharField(max_length=50)
+    settings = JSONField(default={})
+
+    objects = SyncedResourceQuerySet.as_manager()

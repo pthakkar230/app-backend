@@ -14,7 +14,7 @@ class EnvironmentTypeFactory(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'project_{}'.format(n))
     image_name = '3blades/ipython-notebook'
-    cmd = ''
+    cmd = '/runner -type=http'
 
 
 class EnvironmentResourcesFactory(factory.django.DjangoModelFactory):
@@ -40,32 +40,6 @@ class ServerFactory(factory.django.DjangoModelFactory):
     created_by = factory.SubFactory(UserFactory)
 
 
-class WorkspaceFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.Workspace
-
-    server = factory.SubFactory(ServerFactory)
-
-
-class ModelFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.Model
-
-    server = factory.SubFactory(ServerFactory)
-    script = 'test.py'
-    method = 'test'
-
-
-class JobFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.Job
-
-    server = factory.SubFactory(ServerFactory)
-    script = 'test.py'
-    method = 'test'
-    schedule = '* * * * *'
-
-
 class ServerRunStatisticsFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.ServerRunStatistics
@@ -85,6 +59,7 @@ class ServerStatisticsFactory(factory.django.DjangoModelFactory):
     stop = timezone.now()
     size = 0
 
+
 class SSHTunnelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.SshTunnel
@@ -95,11 +70,4 @@ class SSHTunnelFactory(factory.django.DjangoModelFactory):
     endpoint = factory.Faker('domain_name')
     remote_port = factory.Faker('pyint')
     username = factory.Faker('user_name')
-    server = factory.SubFactory(ServerFactory)
-
-
-class DataSourceFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.DataSource
-
     server = factory.SubFactory(ServerFactory)

@@ -47,6 +47,10 @@ def make_fake_api_client():
         'networks.return_value': fake_api.get_fake_network_list()[1],
         'start.return_value': None,
         'wait.return_value': 0,
+        'port.return_value': [{
+            'HostIp': '127.0.0.1',
+            'HostPort': '5000'
+        }],
     })
     mock_client._version = docker.constants.DEFAULT_DOCKER_API_VERSION
     return mock_client

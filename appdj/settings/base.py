@@ -13,10 +13,10 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 import os
 import dj_database_url
 import uuid
+from django.urls import reverse_lazy
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
@@ -29,7 +29,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -39,27 +38,35 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',
+    'django.contrib.sites',
 
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_swagger',
+    'oauth2_provider',
+    'social_django',
+    'rest_framework_social_oauth2',
     'storages',
     'django_extensions',
+    'cacheops',
 
     'base',
     'users',
     'billing',
     'projects',
     'servers',
+    'actions',
 ]
 
 MIDDLEWARE = [
+    'actions.middleware.ActionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'base.middleware.NamespaceMiddleware',
 ]
@@ -84,7 +91,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'appdj.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
@@ -92,6 +98,28 @@ DATABASES = {
     'default': dj_database_url.config(conn_max_age=600, default='postgres://postgres:@localhost:5432/postgres')
 }
 
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.github.GithubOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("GOOGLE_CLIENT_ID", '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/drive'
+]
+
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get("GITHUB_CLIENT_ID", '')
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", '')
+SOCIAL_AUTH_GITHUB_SCOPE = ['user:email', 'repo']
+
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+
+LOGIN_URL = '/api-auth/login/'
+LOGIN_REDIRECT_URL = '/swagger/'
+LOGOUT_URL = '/api-auth/logout/'
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
@@ -121,7 +149,6 @@ PASSWORD_HASHERS = [
 
 BCRYPT_LOG_ROUNDS = 13
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
@@ -135,6 +162,7 @@ USE_L10N = True
 
 USE_TZ = True
 
+SITE_ID = 'c66d1616-09a7-4594-8c6d-2e1c1ba5fe3b'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
@@ -162,11 +190,14 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework_social_oauth2.authentication.SocialAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
 }
 
 RESOURCE_DIR = os.environ.get('RESOURCE_DIR', '/workspaces')
@@ -182,12 +213,41 @@ CACHES = {
             'SOCKET_TIMEOUT': 5
         },
     },
+    'locmem': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
 }
+
+CACHEOPS_REDIS = os.environ.get('REDIS_URL', "redis://localhost:6379/1")
+
+CACHEOPS = {
+    # Automatically cache any User.objects.get() calls for 15 minutes
+    # This includes request.user or post.author access,
+    # where Post.author is a foreign key to auth.User
+    'auth.user': {'ops': 'get', 'timeout': 60 * 15},
+
+    # Automatically cache all gets and queryset fetches
+    # to other django.contrib.auth models for an hour
+    'auth.*': {'ops': ('fetch', 'get'), 'timeout': 60 * 60},
+
+    # Cache gets, fetches, counts and exists to Permission
+    # 'all' is just an alias for ('get', 'fetch', 'count', 'exists')
+    'auth.permission': {'ops': 'all', 'timeout': 60 * 60},
+
+    # Enable manual caching on all other models with default timeout of an hour
+    # Use Post.objects.cache().get(...)
+    #  or Tags.objects.filter(...).order_by(...).cache()
+    # to cache particular ORM request.
+    # Invalidation is still automatic
+    '*.*': {'timeout': 60 * 60},
+}
+
+CACHEOPS_DEGRADE_ON_FAILURE = True
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 # celery
-CELERY_RESULT_BACKEND = 'django-cache'
+CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL')
 CELERY_BROKER_POOL_LIMIT = 1  # Will decrease connection usage
 CELERY_BROKER_HEARTBEAT = None  # We're using TCP keep-alive instead
 CELERY_BROKER_CONNECTION_TIMEOUT = 30  # May require a long timeout due to Linux DNS timeouts etc
@@ -200,8 +260,15 @@ USE_X_FORWARDED_HOST = True
 PRIMARY_KEY_FIELD = ('django.db.models.UUIDField', dict(primary_key=True, default=uuid.uuid4, editable=False))
 
 MIGRATION_MODULES = {
+    'sites': 'appdj.migrations.sites',
     'admin': 'appdj.migrations.admin',
     'auth': 'appdj.migrations.auth',
     'contenttypes': 'appdj.migrations.contenttypes',
-    'django_celery_results': 'appdj.migrations.django_celery_results'
+    'django_celery_results': 'appdj.migrations.django_celery_results',
+    'oauth2_provider': 'appdj.migrations.oauth2_provider',
+    'social_django': 'appdj.migrations.social_django',
+}
+
+ABSOLUTE_URL_OVERRIDES = {
+    'auth.user': lambda o, n: reverse_lazy('user-detail', kwargs={'namespace': n.name, 'pk': o.pk}),
 }

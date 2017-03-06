@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
 
 
@@ -36,32 +35,3 @@ class Email(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='emails', null=True)
     public = models.BooleanField(default=False)
     unsubscribed = models.BooleanField(default=True)
-
-
-class Integration(models.Model):
-    GITHUB = 'github'
-    S3 = 's3'
-    GOOGLE = 'google'
-
-    PROVIDERS = (
-        (GITHUB, "GitHub"),
-        (S3, "Amazon S3"),
-        (GOOGLE, "Google Drive")
-    )
-
-    FIELDS = {
-        GITHUB: [
-            {'name': 'branch', 'verbose_name': 'GitHub branch', 'validators': ['path_exists'],
-             'helper': 'Default branch is master'},
-        ]
-    }
-
-    ACCESS_TOKEN_CACHE_KEY_FORMAT = '{provider}_{integration_id}_access_token'
-    REFRESH_TOKEN_CACHE_KEY_FORMAT = '{provider}_{integration_id}_refresh_token'
-
-    integration_id = models.CharField(max_length=64)
-    integration_email = models.CharField(max_length=255)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='integrations', null=True)
-    scopes = ArrayField(models.CharField(max_length=255), blank=True, null=True)
-    provider = models.CharField(max_length=255)
-    settings = JSONField(blank=True, null=True)

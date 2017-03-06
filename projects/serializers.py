@@ -1,10 +1,13 @@
 import base64
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from pathlib import Path
 from rest_framework import serializers
+from social_django.models import UserSocialAuth
 
 from users.serializers import UserSerializer
-from .models import Project, File, Collaborator
+from .models import Project, File, Collaborator, SyncedResource
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -16,6 +19,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         project = super().create(validated_data)
         request = self.context['request']
         Collaborator.objects.create(project=project, owner=True, user=request.user)
+        Path(settings.RESOURCE_DIR, project.get_owner_name(), str(project.pk)).mkdir(parents=True, exist_ok=True)
         return project
 
 
@@ -70,3 +74,20 @@ class CollaboratorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collaborator
         fields = ('id', 'owner', 'joined', 'user')
+
+
+class SyncedResourceSerializer(serializers.ModelSerializer):
+    provider = serializers.CharField(source='integration.provider')
+
+    class Meta:
+        model = SyncedResource
+        fields = ('folder', 'settings', 'provider')
+
+    def create(self, validated_data):
+        provider = validated_data.pop('integration').get('provider')
+        instance = SyncedResource(**validated_data)
+        integration = UserSocialAuth.objects.filter(user=self.context['request'].user, provider=provider).first()
+        instance.integration = integration
+        instance.project_id = self.context['view'].kwargs['project_pk']
+        instance.save()
+        return instance
