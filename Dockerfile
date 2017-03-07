@@ -25,4 +25,6 @@ RUN . ../env/bin/activate; pip --no-cache-dir install -r requirements/dev.txt
 
 ADD . /srv/app
 
+ENTRYPOINT ["/srv/app/docker-entrypoint.sh"]
+
 EXPOSE 80
