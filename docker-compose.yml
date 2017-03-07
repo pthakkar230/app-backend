@@ -35,7 +35,7 @@ services:
     ports:
       - "6379:6379"
   server:
-    build: ../openresty
+    image: 3blades/openresty:latest
     command: -p '' -c nginx.conf -g 'daemon off;'
     ports:
       - "5000:80"
@@ -47,7 +47,7 @@ services:
     image: gliderlabs/logspout
     env_file: env
   notifications-server:
-    build: ../notifications-server
+    image: 3blades/notifications-server:latest
     ports:
       - "3000:3000"
     env_file: env
