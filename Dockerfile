@@ -20,7 +20,7 @@ WORKDIR /srv/app/
 
 ADD requirements/ /srv/app/requirements
 
-# install requirements to run hub server
+# install requirements to run app
 RUN . ../env/bin/activate; pip --no-cache-dir install -r requirements/dev.txt
 
 ADD . /srv/app

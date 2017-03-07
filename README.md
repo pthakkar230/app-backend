@@ -18,28 +18,33 @@ Refer to [docs repo](https://github.com/3blades/docs) for full stack installatio
 Requirements:
 
 - [Python 3.6](https://www.python.org/downloads/release/python-360/)
-- (Optional) [Virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
+- [Virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
 - (Optional) [Docker](https://docs.docker.com/engine/installation/)
 
-> Pro Tip! Use XYZ to install Python 3.6 on Linux systems.
+> Pro Tip! Use [pyenv](https://github.com/pyenv/pyenv) to install Python 3.6 on Linux systems.
 
 We recommend using [Docker](https://docs.docker.com/engine/installation/) to run [Postgres](https://hub.docker.com/_/postgres/) and [Redis](https://hub.docker.com/_/redis/).
 
 If you prefer, you can install [Postgres](https://www.postgresql.org/docs/current/static/tutorial-install.html) and [Redis](https://redis.io/topics/quickstart) directly on your host.
 
-Install dependencies:
+Configure virtualenv:
+
+    virtualenv -p python3.6 venv
+    source venv/bin/activate
+
+Install dev dependencies:
 
     pip install -r ./requirements/dev.txt
 
-Run Postgres:
+(Optional) Run Postgres with docker:
 
     docker run --name my-postgres -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
 
-Run Redis:
+(Optional) Run Redis with docker:
 
     docker run --name my-redis -p 6379:6379 -d redis
 
-Verify docker runs:
+Verify docker containers:
 
 ```
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
@@ -49,7 +54,7 @@ e6c4011e0c3e        redis               "docker-entrypoint..."   4 seconds ago  
 
 Export environment variables: `DATABASE_URL`, `REDIS_URL`, `DJANGO_SETTINGS_MODULE=appdj.settings.dev`. For example:
 
-    export DATABASE_URL='postgres://postgres:mysecretpassword@localhost:5432/'
+    export DATABASE_URL='postgres://postgres:mysecretpassword@localhost:5432/postgres'
     export REDIS_URL='redis://localhost:6379/0'
     export DJANGO_SETTINGS_MODULE='appdj.settings.dev'
 
@@ -78,6 +83,10 @@ Update Django settings so that it uses `test` module:
 Run tests:
 
     python manage.py test
+
+## Swagger JSON file
+
+http://127.0.0.1:8000/swagger/?format=openapi
 
 ## Contributing
 
