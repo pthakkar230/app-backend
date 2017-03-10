@@ -19,6 +19,11 @@ Requirements:
 
 - [Vagrant](https://www.vagrantup.com/downloads.html)
 
+Setup virtualenv on your host with Python 2.7:
+
+    virtualenv -p python2.7 venv
+    source venv/bin/activate
+
 Launch Vagrant environment:
 
     vagrant up
