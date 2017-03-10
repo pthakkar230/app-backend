@@ -79,11 +79,11 @@ Install dev dependencies:
 
     pip install -r ./requirements/dev.txt
 
-(Optional) Run Postgres with docker:
+Run Postgres with docker:
 
     docker run --name my-postgres -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
 
-(Optional) Run Redis with docker:
+Run Redis with docker:
 
     docker run --name my-redis -p 6379:6379 -d redis
 

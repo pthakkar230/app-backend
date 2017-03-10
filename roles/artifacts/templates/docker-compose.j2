@@ -4,8 +4,6 @@ services:
     image: {{ db_image | default('postgres:alpine')}}
     ports:
       - "{{ db_ports | default('5432:5432') }}"
-    environment:
-      - POSTGRES_PASSWORD="{{ postgres_password | default('mysecretpassword') }}"
   broker:
     image: {{ rabbitmq_image | default('rabbitmq:alpine') }}
     ports:
