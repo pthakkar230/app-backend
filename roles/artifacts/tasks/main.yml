@@ -1,0 +1,30 @@
+---
+
+- name: create a working directory
+  file: path='{{ working_dir }}' state=directory
+
+- name: copy docker-compose.yml to working directory
+  template: src=docker-compose.j2  dest='{{ working_dir }}/docker-compose.yml'
+
+# Obtain IP facts from ipify.org
+- name: get public IPv4 address
+  ipify_facts:
+
+- set_fact: local_ip="{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+
+- debug: var=local_ip
+
+- name: copy env to working directory
+  template: src=env.j2 dest='{{ working_dir }}/env'
+
+- name: copy activate virtualenv script to home directory
+  template: src=activate_virtualenv.j2 dest='{{ scripts_folder }}/activate_virtualenv.sh'
+
+- name: copy migrate script to home directory
+  template: src=migrate.j2 dest='{{ scripts_folder }}/migrate.sh'
+
+- name: copy createsuperuser script to home directory
+  template: src=createsuperuser.j2 dest='{{ scripts_folder }}/createsuperuser.sh'
+
+- name: copy runserver script to home directory
+  template: src=runserver.j2 dest='{{ scripts_folder }}/runserver.sh'

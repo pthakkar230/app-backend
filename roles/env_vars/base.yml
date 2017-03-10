@@ -1,0 +1,62 @@
+---
+
+project_name: 3Blades
+application_name: threeblades
+virtualenv_dir: /vagrant/venv3
+app_dir: /vagrant
+home_dir: /home/ubuntu
+scripts_folder: "{{ home_dir }}/scripts"
+
+# env file
+database_url: postgres://postgres:mysecretpassword@127.0.0.1:5432/{{ database_name | default('postgres') }}
+is_debug: true
+redis_url: redis://127.0.0.1:6379/0
+django_settings_module: appdj.settings.dev
+secret_key: test
+docker_host:
+rabbitmq_url:
+aws_storage_bucket_name:
+
+# Django environment variables.
+django_environment:
+  DJANGO_SETTINGS_MODULE: "{{ django_settings_module }}"
+  DJANGO_SECRET_KEY: "{{ secret_key }}"
+  STATIC_ROOT: /static
+  DATABASE_NAME: "{{ db_name }}"
+  DATABASE_USER: "{{ db_user }}"
+  DATABASE_PASSWORD: "{{ db_password }}"
+  BROKER_URL: "{{ broker_url }}"
+
+# Working directory
+working_dir: /home/user/ubuntu
+
+# Database settings.
+db_user: "{{ application_name }}"
+db_name: "{{ application_name }}"
+db_password: password
+
+# OpenResty settings.
+nginx_server_name: 192.168.10.100
+nginx_strong_dh_group: no
+
+# RabbitMQ settings.
+rabbitmq_server_name: "{{ inventory_hostname }}"
+
+rabbitmq_admin_user: admin
+rabbitmq_admin_password: password
+
+rabbitmq_application_vhost: "{{ application_name }}"
+rabbitmq_application_user: "{{ application_name }}"
+rabbitmq_application_password: password
+
+# Celery settings.
+celery_num_workers: 2
+
+# Application settings.
+django_settings_file: "{{ application_name }}.settings.local"
+django_secret_key: "test"
+
+broker_url: "amqp://{{ rabbitmq_application_user }}:{{ rabbitmq_application_password }}@localhost/{{ rabbitmq_application_vhost }}"
+
+run_django_db_migrations: yes
+run_django_collectstatic: yes

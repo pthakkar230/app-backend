@@ -1,0 +1,4 @@
+---
+
+server_user: root
+app_home: /vagrant

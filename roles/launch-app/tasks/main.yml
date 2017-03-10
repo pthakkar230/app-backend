@@ -1,0 +1,16 @@
+---
+
+- name: run migration
+  django_manage:
+    app_path: "{{ app_dir }}"
+    command: migrate
+    database: "{{ database_url }}"
+    virtualenv: "{{ app_dir }}/venv3"
+    settings: "{{ django_settings_module }}"
+  environment: django_env_vars
+
+# Create an initial superuser.
+- name: create superuser
+  django_manage:
+    command: "createsuperuser --noinput --username=admin --email=admin@example.com"
+    app_path: "{{ app_dir }}"

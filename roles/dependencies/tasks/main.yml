@@ -1,0 +1,74 @@
+---
+
+- include: create_swap_file.yml
+  when: create_swap_file
+  tags: swap
+
+- name: ensure bash, opnessl, and libssl are the latest versions
+  apt: name={{ item }} update_cache={{ update_apt_cache }} state=latest
+  with_items:
+    - bash
+    - build-essential
+    - openssl
+    - libssl-dev
+    - libssl-doc
+    - tcl
+  tags: packages
+
+- name: install base packages
+  apt: name={{ item }} update_cache={{ update_apt_cache }} force=yes state=installed
+  with_items:
+    - build-essential
+    - acl
+    - ntp
+    - htop
+    - git
+    - libpq-dev
+    - python-dev
+    - python-pip
+    - python-pycurl
+    - python-setuptools
+  tags: packages
+
+- name: upgrade pip
+  pip: name=pip state=latest
+  tags: packages
+
+- name: add repository for python 3.6 to the sources list
+  apt_repository: repo='ppa:fkrull/deadsnakes'
+                  update_cache={{ update_apt_cache }}
+                  state=present
+
+- name: install python 3.6 and related packages
+  apt: name={{ item }} update_cache={{ update_apt_cache }} state=present
+  with_items:
+    - python3.6
+    - python3.6-dev
+    - python3-pip
+    - ipython3
+  tags: packages
+
+- name: install virtualenv with pip
+  action: pip name={{item}} state=present
+  with_items:
+    - virtualenv
+
+- name: set up virtualenv with python 3.6
+  shell: virtualenv -p python3.6 "{{ app_home }}/venv3"
+
+- name: install requirements within virtualenv
+  pip:
+    requirements: "{{ app_home }}/requirements.txt"
+    virtualenv: "{{ app_home }}/venv3"
+
+- name: Adding the SECRET_KEY in bashrc file
+  lineinfile: dest=/home/ubuntu/.bashrc line='export SECRET_KEY=test' insertafter='EOF' regexp='export SECRET_KEY=test' state=present
+
+- name: Adding the DATABASE_URL in bashrc file
+  lineinfile: dest=/home/ubuntu/.bashrc line='export DATABASE_URL={{ database_url }}' insertafter='EOF' regexp='export DATABASE_URL={{ database_url }}' state=present
+
+- name: Adding the REDIS_URL in bashrc file
+  lineinfile: dest=/home/ubuntu/.bashrc line='export REDIS_URL={{ redis_url }}' insertafter='EOF' regexp='export REDIS_URL={{ redis_url }}' state=present
+
+- name: Adding the DJANGO_SETTINGS_MODULE in bashrc file
+  lineinfile: dest=/home/ubuntu/.bashrc line='export DJANGO_SETTINGS_MODULE={{ django_settings_file }}' insertafter='EOF' regexp='export DJANGO_SETTINGS_MODULE={{ django_settings_file }}' state=present

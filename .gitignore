@@ -5,6 +5,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Retry
+*.retry
+
 # PyCharm
 *.idea
 
@@ -32,6 +35,7 @@ var/
 *.spec
 
 # Installer logs
+*.log
 pip-log.txt
 pip-delete-this-directory.txt
 
@@ -74,6 +78,7 @@ celerybeat-schedule
 # virtualenv
 .venv/
 venv/
+venv3/
 env35/
 ENV/
 
@@ -88,4 +93,3 @@ ENV/
 resources/
 
 static/
-

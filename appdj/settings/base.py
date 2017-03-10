@@ -104,15 +104,15 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("GOOGLE_CLIENT_ID", '')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_CLIENT_ID', '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/drive'
 ]
 
-SOCIAL_AUTH_GITHUB_KEY = os.environ.get("GITHUB_CLIENT_ID", '')
-SOCIAL_AUTH_GITHUB_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", '')
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('GITHUB_CLIENT_ID', '')
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', '')
 SOCIAL_AUTH_GITHUB_SCOPE = ['user:email', 'repo']
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
@@ -218,7 +218,7 @@ CACHES = {
     }
 }
 
-CACHEOPS_REDIS = os.environ.get('REDIS_URL', "redis://localhost:6379/1")
+CACHEOPS_REDIS = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
 
 CACHEOPS = {
     # Automatically cache any User.objects.get() calls for 15 minutes

@@ -1,0 +1,5 @@
+---
+
+cache_image: redis:alpine
+db_image: postgres:alpine
+pull_images_always: yes

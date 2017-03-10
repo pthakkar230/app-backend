@@ -1,0 +1,19 @@
+version: '2'
+services:
+  db:
+    image: {{ db_image | default('postgres:alpine')}}
+    ports:
+      - "{{ db_ports | default('5432:5432') }}"
+    environment:
+      - POSTGRES_PASSWORD="{{ postgres_password | default('mysecretpassword') }}"
+  broker:
+    image: {{ rabbitmq_image | default('rabbitmq:alpine') }}
+    ports:
+      - "{{ broker_ports | default('5672:5672') }}"
+    environment:
+      - RABBITMQ_DEFAULT_USER="{{ rabbitmq_user | default('user') }}"
+      - RABBITMQ_DEFAULT_PASS="{{ rabbitmq_password | default('password') }}"
+  cache:
+    image: {{ cache_image | default('redis:alpine') }}
+    ports:
+      - "{{ cache_ports | default('6379:6379') }}"
