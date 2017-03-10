@@ -13,9 +13,47 @@ Application server backend based on [Django](https://www.djangoproject.com/).
 
 Refer to [docs repo](https://github.com/3blades/docs) for full stack installation instructions.
 
-## Dev Setup
+## (Recommended) Dev Setup
 
 Requirements:
+
+- [Vagrant](https://www.vagrantup.com/downloads.html)
+
+Launch Vagrant environment:
+
+    vagrant up
+
+Login to vagrant:
+
+    vagrant ssh
+
+Activate virtualenv:
+
+    cd /vagrant
+    source venv3/bin/activate
+
+Run migration:
+
+    python manage.py migrate
+
+Create super user:
+
+    python manage.py createsuperuser
+
+Run application:
+
+    python manage.py runserver
+
+Connect:
+
+    http://192.168.10.100:8000
+
+> You can change the IP address and external facing port by changing the settings in the `Vagrantfile`.
+
+
+## Native Dev Setup on Linux and Mac Systems
+
+Some of us would rather not use Vagrant...
 
 - [Python 3.6](https://www.python.org/downloads/release/python-360/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
