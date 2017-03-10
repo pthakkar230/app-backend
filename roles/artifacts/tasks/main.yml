@@ -16,15 +16,3 @@
 
 - name: copy env to working directory
   template: src=env.j2 dest='{{ working_dir }}/env'
-
-- name: copy activate virtualenv script to home directory
-  template: src=activate_virtualenv.j2 dest='{{ scripts_folder }}/activate_virtualenv.sh'
-
-- name: copy migrate script to home directory
-  template: src=migrate.j2 dest='{{ scripts_folder }}/migrate.sh'
-
-- name: copy createsuperuser script to home directory
-  template: src=createsuperuser.j2 dest='{{ scripts_folder }}/createsuperuser.sh'
-
-- name: copy runserver script to home directory
-  template: src=runserver.j2 dest='{{ scripts_folder }}/runserver.sh'
