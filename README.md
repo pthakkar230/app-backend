@@ -47,11 +47,11 @@ Create super user:
 
 Run application:
 
-    python manage.py runserver
+    python manage.py runserver 0.0.0.0:8000
 
 Connect:
 
-    http://192.168.10.100:8000
+    http://localhost:8000/swagger
 
 > You can change the IP address and external facing port by changing the settings in the `Vagrantfile`.
 
