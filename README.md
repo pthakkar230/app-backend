@@ -13,9 +13,52 @@ Application server backend based on [Django](https://www.djangoproject.com/).
 
 Refer to [docs repo](https://github.com/3blades/docs) for full stack installation instructions.
 
-## Dev Setup
+## (Recommended) Dev Setup
 
 Requirements:
+
+- [Vagrant](https://www.vagrantup.com/downloads.html)
+
+Setup virtualenv on your host with Python 2.7:
+
+    virtualenv -p python2.7 venv
+    source venv/bin/activate
+
+Launch Vagrant environment:
+
+    vagrant up
+
+Login to vagrant:
+
+    vagrant ssh
+
+Activate virtualenv:
+
+    cd /vagrant
+    source venv3/bin/activate
+
+Run migration:
+
+    python manage.py migrate
+
+Create super user:
+
+    python manage.py createsuperuser
+
+Run application:
+
+    python manage.py runserver 0.0.0.0:8000
+
+Connect:
+
+    http://localhost:8000/swagger
+
+> You can change the IP address and external facing port by changing the settings in the `Vagrantfile`.
+
+
+## Native Dev Setup on Linux and Mac Systems
+
+Some of us would rather not use Vagrant...
 
 - [Python 3.6](https://www.python.org/downloads/release/python-360/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
@@ -36,11 +79,11 @@ Install dev dependencies:
 
     pip install -r ./requirements/dev.txt
 
-(Optional) Run Postgres with docker:
+Run Postgres with docker:
 
     docker run --name my-postgres -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
 
-(Optional) Run Redis with docker:
+Run Redis with docker:
 
     docker run --name my-redis -p 6379:6379 -d redis
 

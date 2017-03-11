@@ -1,0 +1,17 @@
+---
+
+- name: create a {{ application_name }} virtual machine via vagrant
+  hosts: all
+  become: yes
+  become_user: root
+  remote_user: vagrant
+  vars:
+    - update_apt_cache: yes
+  vars_files:
+    - roles/env_vars/base.yml
+
+  roles:
+    - dependencies
+    - docker
+    - artifacts
+    - launch-services

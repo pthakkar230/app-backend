@@ -1,0 +1,17 @@
+---
+
+- name: create data volume container
+  docker_container:
+    name: postgresql-data
+    image: "{{ db_data_image | default('busybox') }}"
+    volumes:
+      - /var/lib/data
+    state: present
+
+# launch the full stack in background (-d)
+- name: launch stack
+  command: docker-compose -f '{{ working_dir }}'/docker-compose.yml up -d
+  become: true
+
+- name: wait for services to start
+  pause: seconds=10
