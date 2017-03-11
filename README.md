@@ -13,10 +13,11 @@ Application server backend based on [Django](https://www.djangoproject.com/).
 
 Refer to [docs repo](https://github.com/3blades/docs) for full stack installation instructions.
 
-## (Recommended) Dev Setup
+## Dev Setup
 
 Requirements:
 
+- Vagrant may be used with several VM solutions. We recommend [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 - [Vagrant](https://www.vagrantup.com/downloads.html)
 
 Setup virtualenv on your host with Python 2.7:
