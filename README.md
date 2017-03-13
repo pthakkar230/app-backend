@@ -14,6 +14,16 @@ Application server backend based on [Django](https://www.djangoproject.com/).
 Refer to [docs repo](https://github.com/3blades/docs) for full stack installation instructions.
 
 ## Dev Setup
+##
+
+### Note for Users with Windows
+
+If you have Docker installed on Windows and wish to use Virtualbox as your Vagrant provider (enabled by default), then you will not be able to run both Docker and Vagrant at the same time as they both require Hyper-V. We have found the following work around the simplest to implement:
+
+Log into Vagrant terminal with `vagrant ssh` and manage docker directly from the VM. If you want to access ports published by docker containers, you must have the right ports forwarded in your Vagrantfile. Edits need a `vagrant reload` for the changes to take effect.
+
+
+### Dev Setup with Vagrant
 
 Requirements:
 
@@ -57,7 +67,7 @@ Connect:
 > You can change the IP address and external facing port by changing the settings in the `Vagrantfile`.
 
 
-## Native Dev Setup on Linux and Mac Systems
+### Native Dev Setup on Linux and Mac Systems
 
 Some of us would rather not use Vagrant...
 
@@ -118,6 +128,7 @@ Access API docs page and login:
 
     http://localhost:8000/swagger/
 
+
 ## Run Tests
 
 Update Django settings so that it uses `test` module:
@@ -128,9 +139,11 @@ Run tests:
 
     python manage.py test
 
+
 ## Swagger JSON file
 
 http://127.0.0.1:8000/swagger/?format=openapi
+
 
 ## Contributing
 
