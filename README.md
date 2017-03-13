@@ -22,6 +22,7 @@ If you have Docker installed on Windows and wish to use Virtualbox as your Vagra
 
 Log into Vagrant terminal with `vagrant ssh` and manage docker directly from the VM. If you want to access ports published by docker containers, you must have the right ports forwarded in your Vagrantfile. Edits need a `vagrant reload` for the changes to take effect.
 
+
 ### Dev Setup with Vagrant
 
 Requirements:
@@ -127,6 +128,7 @@ Access API docs page and login:
 
     http://localhost:8000/swagger/
 
+
 ## Run Tests
 
 Update Django settings so that it uses `test` module:
@@ -137,9 +139,11 @@ Run tests:
 
     python manage.py test
 
+
 ## Swagger JSON file
 
 http://127.0.0.1:8000/swagger/?format=openapi
+
 
 ## Contributing
 
