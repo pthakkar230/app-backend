@@ -9,6 +9,8 @@ from projects.tasks import sync_github
 class ProjectViewSet(NamespaceMixin, viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+    filter_fields = ('private',)
+    ordering_fileds = ('name',)
 
 
 class FileViewSet(NamespaceMixin, viewsets.ModelViewSet):
