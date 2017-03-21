@@ -15,8 +15,13 @@ from .serializers import UserSerializer, EmailSerializer, IntegrationSerializer,
 
 
 class UserViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
-    queryset = get_user_model().objects.select_related('profile')
+    queryset = get_user_model().objects.filter(is_active=True).select_related('profile')
     serializer_class = UserSerializer
+    filter_fields = ('username',)
+
+    def perform_destroy(self, instance):
+        instance.active = False
+        instance.save()
 
 
 @api_view(['GET'])
@@ -71,7 +76,7 @@ class ObtainAuthToken(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key})
+        return Response({'token': token.key}, status=201)
 
     def get_serializer(self):
         return self.serializer_class(data=self.request.data)

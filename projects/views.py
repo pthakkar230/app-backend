@@ -9,18 +9,22 @@ from projects.tasks import sync_github
 class ProjectViewSet(NamespaceMixin, viewsets.ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    filter_fields = ('private',)
+    filter_fields = ('private', 'name')
     ordering_fileds = ('name',)
 
 
 class FileViewSet(NamespaceMixin, viewsets.ModelViewSet):
     queryset = File.objects.select_related('author', 'project')
     serializer_class = FileSerializer
+    filter_fields = ('path',)
 
 
 class CollaboratorViewSet(NamespaceMixin, viewsets.ModelViewSet):
     queryset = Collaborator.objects.all()
     serializer_class = CollaboratorSerializer
+
+    def get_queryset(self):
+        return super().get_queryset().filter(project_id=self.kwargs.get('project_pk'))
 
 
 class SyncedResourceViewSet(NamespaceMixin, viewsets.ModelViewSet):

@@ -88,8 +88,7 @@ class OpenAPICodec(CoreOpenAPICodec):
         if isinstance(definition, string_types) and definition:
             return {"$ref": "#/definitions/%s" % definition}
 
-    @staticmethod
-    def _get_properties(definition):
+    def _get_properties(self, definition):
         properties = OrderedDict()
         for prop in definition.properties:
             properties[prop.name] = {}
@@ -97,6 +96,8 @@ class OpenAPICodec(CoreOpenAPICodec):
                 properties[prop.name].update({
                     '$ref': '#/definitions/%s' % prop.reference
                 })
+            elif prop.schema:
+                properties[prop.name].update(self._get_schema_object(prop.schema))
             else:
                 update = {
                     'type': prop.type,

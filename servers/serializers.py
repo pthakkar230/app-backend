@@ -23,7 +23,7 @@ class ServerSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'created_at', 'environment_type', 'environment_resources', 'startup_script', 'config',
                   'status', 'connected')
         read_only_fields = ('created_at',)
-        extra_kwargs = {'connected': {'allow_empty': True}}
+        extra_kwargs = {'connected': {'allow_empty': True, 'required': False}}
 
     def create(self, validated_data):
         return models.Server.objects.create(
@@ -31,6 +31,12 @@ class ServerSerializer(serializers.ModelSerializer):
             created_by=self.context['request'].user,
             **validated_data
         )
+
+    def update(self, instance, validated_data):
+        if self.partial:
+            config = validated_data.pop('config', {})
+            instance.config = {**instance.config, **config}
+        return super().update(instance, validated_data)
 
 
 class ServerRunStatisticsSerializer(serializers.ModelSerializer):

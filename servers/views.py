@@ -1,7 +1,7 @@
 from django.db.models import Sum, Count, Max, F
 from django.db.models.functions import Coalesce, Now
 from rest_framework import status, views, viewsets
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from base.views import ProjectMixin, UUIDRegexMixin, ServerMixin
@@ -13,30 +13,34 @@ from . import serializers, models
 class ServerViewSet(viewsets.ModelViewSet):
     queryset = models.Server.objects.all()
     serializer_class = serializers.ServerSerializer
+    filter_fields = ("name",)
 
-    @detail_route(methods=['post'])
-    def start(self, request, *args, **kwargs):
-        start_server.apply_async(
-            args=[kwargs.get('pk')],
-            task_id=str(request.action.pk)
-        )
-        return Response(status=status.HTTP_202_ACCEPTED)
 
-    @detail_route(methods=['post'])
-    def stop(self, request, *args, **kwargs):
-        stop_server.apply_async(
-            args=[kwargs.get('pk')],
-            task_id=str(request.action.pk)
-        )
-        return Response(status=status.HTTP_202_ACCEPTED)
+@api_view(['post'])
+def start(request, *args, **kwargs):
+    start_server.apply_async(
+        args=[kwargs.get('pk')],
+        task_id=str(request.action.pk)
+    )
+    return Response(status=status.HTTP_202_ACCEPTED)
 
-    @detail_route(methods=['post'])
-    def terminate(self, request, *args, **kwargs):
-        terminate_server.apply_async(
-            args=[kwargs.get('pk')],
-            task_id=str(request.action.pk)
-        )
-        return Response(status=status.HTTP_202_ACCEPTED)
+
+@api_view(['post'])
+def stop(request, *args, **kwargs):
+    stop_server.apply_async(
+        args=[kwargs.get('pk')],
+        task_id=str(request.action.pk)
+    )
+    return Response(status=status.HTTP_202_ACCEPTED)
+
+
+@api_view(['post'])
+def terminate(request, *args, **kwargs):
+    terminate_server.apply_async(
+        args=[kwargs.get('pk')],
+        task_id=str(request.action.pk)
+    )
+    return Response(status=status.HTTP_202_ACCEPTED)
 
 
 class ServerRunStatisticsViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):
