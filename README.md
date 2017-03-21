@@ -30,6 +30,8 @@ Requirements:
 - Vagrant may be used with several VM solutions. We recommend [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 - [Vagrant](https://www.vagrantup.com/downloads.html)
 
+> If using Windows 10, we recommend setting up [Ubuntu based bash shell](https://msdn.microsoft.com/en-us/commandline/wsl/install_guide) and run setup natively as described [in next section](https://github.com/3Blades/app-backend#native-dev-setup-on-linux-and-mac-systems). If using previous versions of Windows, consider using VirtualBox with Ubuntu Xenial (16.04).
+
 Setup virtualenv on your host with Python 2.7:
 
     virtualenv -p python2.7 venv
@@ -80,6 +82,10 @@ Some of us would rather not use Vagrant...
 We recommend using [Docker](https://docs.docker.com/engine/installation/) to run [Postgres](https://hub.docker.com/_/postgres/) and [Redis](https://hub.docker.com/_/redis/).
 
 If you prefer, you can install [Postgres](https://www.postgresql.org/docs/current/static/tutorial-install.html) and [Redis](https://redis.io/topics/quickstart) directly on your host.
+
+If using Debian or Ubuntu Linux distributions, you may have to install dependencies to support SSH using your operating system's package manager:
+
+    sudo apt-get install -y libpq-dev libssl-dev
 
 Configure virtualenv:
 
