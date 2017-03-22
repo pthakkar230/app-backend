@@ -7,14 +7,12 @@
 [![slack in](https://slackin-pypmyuhqds.now.sh/badge.svg)](https://slackin-pypmyuhqds.now.sh/)
 
 # 3Blades Backend Server
-#
 
 Application server backend based on [Django](https://www.djangoproject.com/).
 
 Refer to [docs repo](https://github.com/3blades/docs) for full stack installation instructions.
 
 ## Dev Setup
-##
 
 ### Note for Users with Windows
 
@@ -66,26 +64,48 @@ Connect:
 
     http://localhost:8000/swagger
 
-> You can change the IP address and external facing port by changing the settings in the `Vagrantfile`.
+> You can change the IP address and forwarded port by changing the settings in the `Vagrantfile`.
 
 
-### Native Dev Setup on Linux and Mac Systems
+### Dev Setup with Docker
 
-Some of us would rather not use Vagrant...
+We recommend using Ubuntu Xenial (16.04), although these instructions should also work with other Linux distributions and Mac OSX. Requirements are:
 
 - [Python 3.6](https://www.python.org/downloads/release/python-360/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
-- (Optional) [Docker](https://docs.docker.com/engine/installation/)
+- [Docker](https://docs.docker.com/engine/installation/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+We support the **latest** stable releases of docker engine and docker compose, unless noted otherwise.
 
 > Pro Tip! Use [pyenv](https://github.com/pyenv/pyenv) to install Python 3.6 on Linux systems.
-
-We recommend using [Docker](https://docs.docker.com/engine/installation/) to run [Postgres](https://hub.docker.com/_/postgres/) and [Redis](https://hub.docker.com/_/redis/).
-
-If you prefer, you can install [Postgres](https://www.postgresql.org/docs/current/static/tutorial-install.html) and [Redis](https://redis.io/topics/quickstart) directly on your host.
 
 If using Debian or Ubuntu Linux distributions, you may have to install dependencies to support SSH using your operating system's package manager:
 
     sudo apt-get install -y libpq-dev libssl-dev
+
+We maintain an `docker-compose.yml` file to launch our full stack. Launching the full stack may be necessary to support integration testing, such as creating new user servers. Services include:
+
+[Postgres](https://hub.docker.com/_/postgres/)
+[Redis](https://hub.docker.com/_/redis/)
+[RabbitMQ](https://hub.docker.com/_/rabbitmq/)
+[Notificaitons Server](https://hub.docker.com/r/3blades/notifications-server)
+[Logspout](https://hub.docker.com/r/3blades/logspout/)
+[Celery](https://hub.docker.com/r/3blades/app-backend)
+[API](https://hub.docker.com/r/3blades/app-backend)
+[OpenResty](https://hub.docker.com/r/3blades/)
+
+Export environment variables listed below with your local settings, for example:
+
+    export C_ROOT=1
+    export DATABASE_URL='postgres://postgres:@db:5432/postgres'
+    export DEBUG=True
+    export DJANGO_SETTINGS_MODULE='appdj.settings.dev'
+    export DOCKER_HOST='DOCKER_HOST=tcp://my_vm_ipv4_address:2375'
+    export RABBITMQ_URL='amqp://broker'
+    export REDIS_URL='redis://localhost:6379/0'
+
+> Obtain virtual machine IPv4 address with `ifconfig`. Usually enp0s3 or eth0 will be the IP address you need to configure for DOCKER_HOST env var.
 
 Configure virtualenv:
 
@@ -96,27 +116,56 @@ Install dev dependencies:
 
     pip install -r ./requirements/dev.txt
 
-Run Postgres with docker:
+Use the following command to launch the full stack with docker compose (-d for detached mode):
 
-    docker run --name my-postgres -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+    docker-compose up -d
+
+Verify docker containers with `docker ps`:
+
+```
+CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS              PORTS                                                   NAMES
+3f52405452d9        3blades/openresty:latest              "/usr/local/openre..."   55 minutes ago      Up 55 minutes       443/tcp, 0.0.0.0:5000->80/tcp                           vagrant_server_1
+d27b923375c1        dev_celery                        "/srv/app/docker-e..."   55 minutes ago      Up 53 minutes       80/tcp                                                  vagrant_celery_1
+3034d8539114        dev_api                           "/srv/app/docker-e..."   55 minutes ago      Up 53 minutes       80/tcp                                                  vagrant_api_1
+3b2e36ca71f2        postgres:alpine                       "docker-entrypoint..."   55 minutes ago      Up 55 minutes       0.0.0.0:5432->5432/tcp                                  vagrant_db_1
+94cf97bb0bc6        rabbitmq:alpine                       "docker-entrypoint..."   55 minutes ago      Up 55 minutes       4369/tcp, 5671/tcp, 25672/tcp, 0.0.0.0:5672->5672/tcp   vagrant_broker_1
+bd8179fd15b8        3blades/notifications-server:latest   "npm start"              55 minutes ago      Up 55 minutes       0.0.0.0:3000->3000/tcp                                  vagrant_notifications-server_1
+3ef5ab52176b        redis:alpine                          "docker-entrypoint..."   55 minutes ago      Up 55 minutes       0.0.0.0:6379->6379/tcp                                  vagrant_cache_1
+c06b9d4c73ae        gliderlabs/logspout                   "/bin/logspout"          55 minutes ago      Up 55 minutes       80/tcp                                                  vagrant_logspout_1
+```
+
+Create admin (superuser) user:
+
+    python manage.py createsuperuser
+
+Access API docs page and login:
+
+    http://localhost:5000/swagger/
+
+
+## Dev Setup with Django on Host
+
+Sometimes you may not need to run and test the full stack. Under these circumstances some developers may find that running the Django backend server directly on the host improves development/test cycles, particularly when used with an IDE such as PyCharm.
+
+At a minimum, `app-backend` requires Postgres and Redis.
+
+To run services individually, use the docker run command. Run Postgres with docker:
+
+    docker run --name my-postgres -p 5432:5432 -d postgres
 
 Run Redis with docker:
 
     docker run --name my-redis -p 6379:6379 -d redis
 
-Verify docker containers:
+> You could install Postgres and Redis directly on the host, but we feel that docker simplifies the setup process.
+
+Verify with `docker ps`:
 
 ```
-CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
-e6c4011e0c3e        redis               "docker-entrypoint..."   4 seconds ago       Up 2 seconds        0.0.0.0:6379->6379/tcp   my-redis
-057c41df17c8        postgres            "docker-entrypoint..."   12 seconds ago      Up 10 seconds       0.0.0.0:5432->5432/tcp   my-postgres
+CONTAINER ID        IMAGE                                 COMMAND                  CREATED             STATUS              PORTS                                                   NAMES
+3b2e36ca71f2        postgres:alpine                       "docker-entrypoint..."   55 minutes ago      Up 55 minutes       0.0.0.0:5432->5432/tcp                                  vagrant_db_1
+3ef5ab52176b        redis:alpine                          "docker-entrypoint..."   55 minutes ago      Up 55 minutes       0.0.0.0:6379->6379/tcp                                  vagrant_cache_1
 ```
-
-Export environment variables: `DATABASE_URL`, `REDIS_URL`, `DJANGO_SETTINGS_MODULE=appdj.settings.dev`. For example:
-
-    export DATABASE_URL='postgres://postgres:mysecretpassword@localhost:5432/postgres'
-    export REDIS_URL='redis://localhost:6379/0'
-    export DJANGO_SETTINGS_MODULE='appdj.settings.dev'
 
 Run database migrations:
 
@@ -128,12 +177,11 @@ Create admin (superuser) user:
 
 Run application:
 
-    python manage.py runserver 127.0.0.1:8000
+    python manage.py runserver 0.0.0.0:8000
 
 Access API docs page and login:
 
     http://localhost:8000/swagger/
-
 
 ## Run Tests
 
@@ -149,6 +197,46 @@ Run tests:
 ## Swagger JSON file
 
 http://127.0.0.1:8000/swagger/?format=openapi
+
+## Trouble Shooting
+
+### Environment variables
+
+If you are running app-backend without docker, then you need to make sure all environment variables are set correctly. Verify by checking them with the echo command, such as:
+
+    echo $DATABASE_URL
+
+You can also view all configured environment variables with the `printenv` command.
+
+To avoid having to set environment variables every time you log into the terminal, add them to your `.profile` file. This will automatically export environment variables when launching new bash terminals.
+
+
+### Systemd
+
+Newer Linux distributions including Ubuntu Xenial (16.04) use `systemd` as an init system and system manager. `Systemd` provides commands to obtain service status, start services, stop services, among others.
+
+To view docker service status, type:
+
+    systemctl status docker
+
+The resulting output should confirm the service file used by the docker deamon and its general settings:
+
+```
+docker.service - Docker Application Container Engine
+   Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sun 2017-03-19 15:56:44 UTC; 3 days ago
+     Docs: https://docs.docker.com
+ Main PID: 3897 (dockerd)
+    Tasks: 155
+   Memory: 358.8M
+      CPU: 4min 27.718s
+   CGroup: /system.slice/docker.service
+           ├─ 3897 /usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375
+```
+
+As you can see above, -H tcp://0.0.0.0:2375 is configured which allows the docker daemon to accept connections from other IPv4 addresses. Edit the service file if you do not see this setting in place:
+
+    nano /lib/systemd/system/docker.service
 
 
 ## Contributing
