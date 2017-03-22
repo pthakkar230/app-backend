@@ -7,4 +7,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
-        User.objects.create_superuser("admin", "admin@example.com", "admin")
+        try:
+            User.objects.create_superuser("admin", "admin@example.com", "admin")
+        except:
+            pass
