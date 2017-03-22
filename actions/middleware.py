@@ -1,7 +1,6 @@
 import ujson
 
 from django.contrib.auth.models import AnonymousUser
-from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
 from rest_framework import status
@@ -39,7 +38,8 @@ class ActionMiddleware(object):
         action.action = self._get_action_name(request)
         self._set_action_state(action, response.status_code)
         self._set_action_object(action, request, response)
-        self._set_action_user(action, request.user)
+        if hasattr(request, "user"):
+            self._set_action_user(action, request.user)
         action.end_date = timezone.now()
         action.save()
         return response
