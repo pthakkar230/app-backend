@@ -6,7 +6,6 @@ from pathlib import Path
 from rest_framework import serializers
 from social_django.models import UserSocialAuth
 
-from users.serializers import UserSerializer
 from .models import Project, File, Collaborator, SyncedResource
 
 
@@ -69,11 +68,20 @@ class FileSerializer(serializers.ModelSerializer):
 
 
 class CollaboratorSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    email = serializers.CharField(source='user.email')
 
     class Meta:
         model = Collaborator
-        fields = ('id', 'owner', 'joined', 'user')
+        fields = ('id', 'owner', 'joined', 'email')
+
+    def create(self, validated_data):
+        email = validated_data.pop('user', {}).get('email')
+        project_id = self.context['view'].kwargs['project_pk']
+        owner = validated_data.get("owner", False)
+        if owner is True:
+            Collaborator.objects.filter(project_id=project_id).update(owner=False)
+        user = get_user_model().objects.filter(email=email).first()
+        return Collaborator.objects.create(user=user, project_id=project_id, **validated_data)
 
 
 class SyncedResourceSerializer(serializers.ModelSerializer):
