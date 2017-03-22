@@ -72,11 +72,11 @@ urlpatterns = [
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/is-allowed/',
         servers_views.IsAllowed.as_view(), name='is_allowed'),
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/start/',
-        servers_views.start, name='start'),
+        servers_views.start, name='server-start'),
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/stop/',
-        servers_views.stop, name='stop'),
+        servers_views.stop, name='server-stop'),
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/terminate/',
-        servers_views.terminate, name='terminate'),
+        servers_views.terminate, name='server-terminate'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
 

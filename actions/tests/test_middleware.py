@@ -83,11 +83,11 @@ class ActionMiddlewareFunctionalTest(TestCase):
         url = reverse('server-start', kwargs={
             'namespace': self.user.username,
             'project_pk': str(server.project.pk),
-            'pk': str(server.pk)
+            'server_pk': str(server.pk)
         })
         request = self.factory.post(url)
         response = self.middleware(request)
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         action = Action.objects.get()
         self.assertEqual(action.state, Action.IN_PROGRESS)
 
