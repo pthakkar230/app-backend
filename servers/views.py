@@ -17,30 +17,30 @@ class ServerViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['post'])
-def start(request, *args, **kwargs):
+def start(request, project_pk, server_pk):
     start_server.apply_async(
-        args=[kwargs.get('pk')],
+        args=[server_pk],
         task_id=str(request.action.pk)
     )
-    return Response(status=status.HTTP_202_ACCEPTED)
+    return Response(status=status.HTTP_201_CREATED)
 
 
 @api_view(['post'])
 def stop(request, *args, **kwargs):
     stop_server.apply_async(
-        args=[kwargs.get('pk')],
+        args=[kwargs.get('server_pk')],
         task_id=str(request.action.pk)
     )
-    return Response(status=status.HTTP_202_ACCEPTED)
+    return Response(status=status.HTTP_201_CREATED)
 
 
 @api_view(['post'])
 def terminate(request, *args, **kwargs):
     terminate_server.apply_async(
-        args=[kwargs.get('pk')],
+        args=[kwargs.get('server_pk')],
         task_id=str(request.action.pk)
     )
-    return Response(status=status.HTTP_202_ACCEPTED)
+    return Response(status=status.HTTP_201_CREATED)
 
 
 class ServerRunStatisticsViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):

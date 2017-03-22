@@ -17,6 +17,7 @@ from django.conf import settings
 from django.conf.urls import url, include
 from django.conf.urls.static import static
 from django.contrib import admin
+from rest_framework.exceptions import NotFound, APIException
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
 from rest_framework_nested import routers
 
@@ -78,6 +79,15 @@ urlpatterns = [
         servers_views.terminate, name='terminate'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
+
+
+def handler404(request):
+    raise NotFound()
+
+
+def handler500(request):
+    raise APIException(detail="Internal Server Error", code=500)
+
 
 if settings.DEBUG:
     import debug_toolbar

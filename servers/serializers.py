@@ -26,9 +26,13 @@ class ServerSerializer(serializers.ModelSerializer):
         extra_kwargs = {'connected': {'allow_empty': True, 'required': False}}
 
     def create(self, validated_data):
+        config = validated_data.pop("config", {})
+        if "script" in config and config["script"].endswith("py"):
+            config["module"] = config["script"].split(".")[0]
         return models.Server.objects.create(
             project_id=self.context['view'].kwargs['project_pk'],
             created_by=self.context['request'].user,
+            config=config,
             **validated_data
         )
 
