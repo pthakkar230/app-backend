@@ -54,6 +54,9 @@ class Collaborator(models.Model):
 
     objects = ProjectUsersQuerySet.as_manager()
 
+    def get_absolute_url(self, namespace):
+        return ""
+
 
 class FileQuerySet(models.QuerySet):
     def namespace(self, namespace):

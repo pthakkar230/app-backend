@@ -139,6 +139,7 @@ class SchemaGenerator(RestSchemaGenerator):
             if not isinstance(serializer, serializers.Serializer):
                 return []
             self.add_definition(serializer, definitions)
+        definitions.update(self.get_error_definitions())
         return list(definitions.values())
 
     def add_definition(self, serializer, definitions):
@@ -173,40 +174,66 @@ class SchemaGenerator(RestSchemaGenerator):
             required=required_fields
         )
 
+    def get_error_definitions(self):
+        definitions = {
+            'not_found': Schema(
+                name="NotFound",
+                object_type='object',
+                properties=[
+                    Property(
+                        name="detail",
+                        type="string",
+                        description=""
+                    )
+                ],
+            )
+        }
+        return definitions
+
     @staticmethod
-    def get_definition(serializer):
+    def get_bad_request_property(field):
+        return Property(
+            name=field.field_name,
+            type='array',
+            description="%s field errors" % field.field_name,
+            items='string'
+        )
+
+    def get_bad_request_definition(self, serializer):
+        if serializer is None:
+            return None
         name = serializer.__class__.__name__.replace('Serializer', '')
-        properties = []
-        required_fields = []
+        properties = [
+            Property(
+                name="non_field_errors",
+                type='array',
+                description="Errors not connected to any field",
+                items='string'
+            )
+        ]
         for field in serializer.fields.values():
             if isinstance(field, serializers.HiddenField):
                 continue
             if isinstance(field, serializers.Serializer):
+                name = field.__class__.__name__.replace('Serializer', '')
                 properties.append(Property(
                     name=field.field_name,
-                    reference=field.__class__.__name__.replace('Serializer', '')
+                    type='object',
+                    description="",
+                    schema=self.get_bad_request_definition(field)
                 ))
             else:
-                description = force_text(field.help_text) if field.help_text else ''
-                properties.append(Property(
-                    name=field.field_name,
-                    type=types_lookup[field],
-                    description=description,
-                    items='string' if isinstance(field, serializers.ManyRelatedField) else None
-                ))
-                if field.required:
-                    required_fields.append(field.field_name)
+                properties.append(self.get_bad_request_property(field))
         return Schema(
             name=name,
             object_type='object',
-            properties=properties,
-            required=required_fields
+            properties=properties
         )
 
-    @staticmethod
-    def get_responses(path, method, view):
+    def get_responses(self, path, method, view):
         responses = []
         schema_name = None
+        serializer = None
         if hasattr(view, 'get_serializer'):
             serializer = view.get_serializer()
             schema_name = serializer.__class__.__name__.replace('Serializer', '')
@@ -220,6 +247,7 @@ class SchemaGenerator(RestSchemaGenerator):
                 ) if schema_name is not None else None
             ))
         else:
+            bad_request_definition = self.get_bad_request_definition(serializer)
             if method == 'GET':
                 responses.extend([
                     Response(
@@ -229,7 +257,8 @@ class SchemaGenerator(RestSchemaGenerator):
                     ),
                     Response(
                         status_code='404',
-                        description='%s not found' % schema_name
+                        description='%s not found' % schema_name,
+                        schema="NotFound"
                     )
                 ])
             elif method == 'POST':
@@ -241,7 +270,8 @@ class SchemaGenerator(RestSchemaGenerator):
                     ),
                     Response(
                         status_code='400',
-                        description='Invalid data supplied'
+                        description='Invalid data supplied',
+                        schema=bad_request_definition
                     )
                 ])
             elif method == 'PUT':
@@ -253,7 +283,8 @@ class SchemaGenerator(RestSchemaGenerator):
                     ),
                     Response(
                         status_code='400',
-                        description='Invalid data supplied'
+                        description='Invalid data supplied',
+                        schema=bad_request_definition
                     )
                 ])
             elif method == 'PATCH':
@@ -265,11 +296,13 @@ class SchemaGenerator(RestSchemaGenerator):
                     ),
                     Response(
                         status_code='400',
-                        description='Invalid data supplied'
+                        description='Invalid data supplied',
+                        schema=bad_request_definition
                     ),
                     Response(
                         status_code='404',
-                        description='%s not found' % schema_name
+                        description='%s not found' % schema_name,
+                        schema="NotFound"
                     )
                 ])
             elif method == 'DELETE':
@@ -280,7 +313,8 @@ class SchemaGenerator(RestSchemaGenerator):
                     ),
                     Response(
                         status_code='404',
-                        description='%s not found' % schema_name
+                        description='%s not found' % schema_name,
+                        schema="NotFound"
                     )
                 ])
         return responses
