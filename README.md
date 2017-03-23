@@ -101,7 +101,7 @@ Export environment variables listed below with your local settings, for example:
     export DATABASE_URL='postgres://postgres:@db:5432/postgres'
     export DEBUG=True
     export DJANGO_SETTINGS_MODULE='appdj.settings.dev'
-    export DOCKER_HOST='DOCKER_HOST=tcp://my_vm_ipv4_address:2375'
+    export DOCKER_HOST='tcp://my_vm_ipv4_address:2375'
     export RABBITMQ_URL='amqp://broker'
     export REDIS_URL='redis://localhost:6379/0'
 
