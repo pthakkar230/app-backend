@@ -246,8 +246,7 @@ With Vagrant, running `vagrant provision` will re run Vagrantfile commands which
 
 If using Vagrant installation option, you can log into your Vagrant VM with `vagrant ssh` and then run `docker-compose down` and then `docker-compose up -d` manually from the home directory. This would re launch containers without having to rung `vagrant provision` which is more time consuming. With Vagrant setup, `docker-compose.yml` and `env` files are copied to the vagrant user's home directory.
 
-If setting up with Docker on Linux distribution, then you can do a `docker-compose down` and a `docker-compose up -d` but from the repositories root folder. 
-
+If setting up with Docker on Linux distribution, then you can do a `docker-compose down` and a `docker-compose up -d` but from the repositories root folder.
 
 ## Contributing
 

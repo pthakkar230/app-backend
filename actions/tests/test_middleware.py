@@ -5,7 +5,6 @@ from django.core.handlers.base import BaseHandler
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APIRequestFactory
 
 from actions.views import ActionList
@@ -25,8 +24,7 @@ from ..models import Action
 class ActionMiddlewareFunctionalTest(TestCase):
     def setUp(self):
         self.user = UserFactory()
-        token = Token.objects.create(user=self.user)
-        self.token_header = 'Token {}'.format(token.key)
+        self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.factory = APIRequestFactory(HTTP_AUTHORIZATION=self.token_header)
         base_handler = BaseHandler()
         base_handler.load_middleware()
@@ -100,8 +98,7 @@ class ActionMiddlewareFunctionalTest(TestCase):
 class ActionMiddlewareTest(TestCase):
     def setUp(self):
         self.user = UserFactory()
-        token = Token.objects.create(user=self.user)
-        self.token_header = 'Token {}'.format(token.key)
+        self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.factory = APIRequestFactory(HTTP_AUTHORIZATION=self.token_header)
         base_handler = BaseHandler()
         base_handler.load_middleware()

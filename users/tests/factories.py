@@ -17,4 +17,3 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.Sequence(lambda o: 'user{}'.format(o))
     email = factory.Sequence(lambda o: 'user{}@a.pl'.format(o))
     password = factory.PostGenerationMethodCall('set_password', 'default')
-    profile = factory.RelatedFactory(UserProfileFactory, 'user')

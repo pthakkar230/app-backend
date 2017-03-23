@@ -1,6 +1,5 @@
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from projects.tests.factories import CollaboratorFactory
@@ -15,8 +14,7 @@ class ServerTest(APITestCase):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
         self.project = collaborator.project
-        token = Token.objects.create(user=self.user)
-        self.token_header = 'Token {}'.format(token.key)
+        self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.env_type = EnvironmentTypeFactory()
         self.env_res = EnvironmentResourcesFactory()
@@ -98,8 +96,7 @@ class ServerRunStatisticsTestCase(APITestCase):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
         self.project = collaborator.project
-        token = Token.objects.create(user=self.user)
-        self.token_header = 'Token {}'.format(token.key)
+        self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 
@@ -126,8 +123,7 @@ class ServerStatisticsTestCase(APITestCase):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
         self.project = collaborator.project
-        token = Token.objects.create(user=self.user)
-        self.token_header = 'Token {}'.format(token.key)
+        self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 

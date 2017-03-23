@@ -4,7 +4,6 @@ from pathlib import Path
 
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from projects.tests.factories import CollaboratorFactory, FileFactory
@@ -15,8 +14,7 @@ from ..models import Project, File
 class ProjectTest(APITestCase):
     def setUp(self):
         self.user = UserFactory()
-        token = Token.objects.create(user=self.user)
-        self.token_header = 'Token {}'.format(token.key)
+        self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 
     def test_create_project(self):
@@ -85,8 +83,7 @@ class ProjectFileTest(APITestCase):
     def setUp(self):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
-        token = Token.objects.create(user=self.user)
-        self.token_header = 'Token {}'.format(token.key)
+        self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.project = collaborator.project
         self.url_kwargs = {'namespace': self.user.username, 'project_pk': self.project.pk}
         self.user_dir = Path('/tmp', self.user.username)
