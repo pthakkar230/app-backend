@@ -3,7 +3,6 @@ from unittest.mock import patch
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from users.tests.factories import UserFactory
@@ -18,8 +17,7 @@ from .factories import ActionFactory
 class ActionTest(APITestCase):
     def setUp(self):
         self.user = UserFactory()
-        token = Token.objects.create(user=self.user)
-        self.token_header = 'Token {}'.format(token.key)
+        self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 
     def test_list_actions(self):

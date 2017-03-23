@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-from rest_framework.authtoken.models import Token
 from django.test import TransactionTestCase
 
 from projects.tests.factories import CollaboratorFactory
@@ -15,7 +14,6 @@ class TestDockerSpawnerForModel(TransactionTestCase):
     def setUp(self):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
-        self.token = Token.objects.create(user=self.user)
         self.server = ServerFactory(
             environment_type=EnvironmentTypeFactory(
                 image_name='test',
@@ -54,7 +52,7 @@ class TestDockerSpawnerForModel(TransactionTestCase):
     def test_get_cmd(self):
         cmd = self.spawner._get_cmd()
         self.assertIn("runner", cmd)
-        self.assertIn(self.token.key, cmd)
+        self.assertIn(self.user.auth_token.key, cmd)
         self.assertIn(self.user.username, cmd)
         self.assertIn(str(self.server.project.pk), cmd)
         self.assertIn(str(self.server.pk), cmd)
