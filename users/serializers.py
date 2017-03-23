@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.authtoken.serializers import AuthTokenSerializer as RestAuthTokenSerializer
-from rest_framework.authtoken.models import Token
 from social_django.models import UserSocialAuth
 
 from base.views import RequestUserMixin
@@ -31,7 +30,6 @@ class UserSerializer(serializers.ModelSerializer):
         profile = UserProfile(user=user, **profile_data)
         profile.save()
         Email.objects.create(user=user, address=validated_data['email'])
-        Token.objects.create(user=user)
         return user
 
     def update(self, instance, validated_data):
