@@ -238,6 +238,16 @@ As you can see above, -H tcp://0.0.0.0:2375 is configured which allows the docke
 
     nano /lib/systemd/system/docker.service
 
+### Launch clean stack
+
+Sometimes it will be necessary to re launch a fresh version of app-backend or full stack. There are several options, depending on how you launched your development environment.
+
+With Vagrant, running `vagrant provision` will re run Vagrantfile commands which will in turn re run dependencies and re launch services. The `vagrant reload` command will restart your virtual machine. Our default configuration uses VirtualBox, so the Vagrantfile will use the VirtualBox provider to restart the Vagrant virtual machine. If you would like to start from scratch, the `vagrant destroy` command will remove your VM so that you can run `vagrant up` as if it were a fresh machine.
+
+If using Vagrant installation option, you can log into your Vagrant VM with `vagrant ssh` and then run `docker-compose down` and then `docker-compose up -d` manually from the home directory. This would re launch containers without having to rung `vagrant provision` which is more time consuming. With Vagrant setup, `docker-compose.yml` and `env` files are copied to the vagrant user's home directory.
+
+If setting up with Docker on Linux distribution, then you can do a `docker-compose down` and a `docker-compose up -d` but from the repositories root folder. 
+
 
 ## Contributing
 
