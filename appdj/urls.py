@@ -15,8 +15,8 @@ Including another URLconf
 """
 from django.conf import settings
 from django.conf.urls import url, include
-from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from rest_framework.exceptions import NotFound, APIException
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
 from rest_framework_nested import routers
@@ -58,6 +58,7 @@ urlpatterns = [
     url(r'^swagger/$', schema_view),
     url(r'^admin/', admin.site.urls),
     url(r'^actions/', include('actions.urls')),
+    url(r'^servers/(?P<server_pk>[^/.]+)/', servers_views.server_internal_details, name="server_internal"),
     url(r'^(?P<namespace>[\w-]+)/', include(router.urls)),
     url(r'^(?P<namespace>[\w-]+)/', include(project_router.urls)),
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/synced-resources/$',
@@ -94,4 +95,4 @@ if settings.DEBUG:
     urlpatterns += [
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
-    urlpatterns = static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + urlpatterns
+    urlpatterns = staticfiles_urlpatterns() + urlpatterns

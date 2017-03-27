@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField, JSONField
@@ -109,6 +110,11 @@ class Server(models.Model):
 
     def is_running(self):
         return self.status == self.RUNNING
+
+    def get_private_ip(self):
+        if self.private_ip != "0.0.0.0":
+            return self.private_ip
+        return urlsplit(os.environ.get("DOCKER_HOST")).hostname
 
 
 class EnvironmentType(models.Model):
