@@ -58,6 +58,7 @@ urlpatterns = [
     url(r'^swagger/$', schema_view),
     url(r'^admin/', admin.site.urls),
     url(r'^actions/', include('actions.urls')),
+    url(r'^servers/(?P<server_pk>[^/.]+)/', servers_views.server_internal_details, name="server_internal"),
     url(r'^(?P<namespace>[\w-]+)/', include(router.urls)),
     url(r'^(?P<namespace>[\w-]+)/', include(project_router.urls)),
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/synced-resources/$',

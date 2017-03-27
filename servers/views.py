@@ -1,6 +1,7 @@
 from django.db.models import Sum, Count, Max, F
 from django.db.models.functions import Coalesce, Now
 from rest_framework import status, views, viewsets
+from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -98,3 +99,16 @@ class IsAllowed(views.APIView):
                 pk=kwargs.get('project_pk', ''), collaborators__auth_token__key=token).exists():
             return Response()
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'], exclude_from_schema=True)
+def server_internal_details(request, server_pk):
+    server = get_object_or_404(models.Server, pk=server_pk)
+    data = {'server': '', 'container_name': ''}
+    if server.status == server.RUNNING:
+        data = {
+            'server': '%s:%s' % (server.get_private_ip(), server.port),
+            'container_name': (server.container_name or '')
+        }
+
+    return Response(data)
