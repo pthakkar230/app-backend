@@ -3,12 +3,6 @@ from rest_framework import serializers
 from . import models
 
 
-class EnvironmentTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.EnvironmentType
-        fields = ('id', 'name', 'image_name', 'cmd', 'work_dir', 'container_path', 'container_port')
-
-
 class EnvironmentResourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnvironmentResource
@@ -20,7 +14,7 @@ class ServerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Server
-        fields = ('id', 'name', 'created_at', 'environment_type', 'environment_resources', 'startup_script', 'config',
+        fields = ('id', 'name', 'created_at', 'image_name', 'environment_resources', 'startup_script', 'config',
                   'status', 'connected')
         read_only_fields = ('created_at',)
         extra_kwargs = {'connected': {'allow_empty': True, 'required': False}}

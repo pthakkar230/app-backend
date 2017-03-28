@@ -47,7 +47,7 @@ class DockerSpawner(ServerSpawner):
     def __init__(self, server, client=None):
         super().__init__(server)
         self.client = client or from_env()
-        self.container_port = self.server.environment_type.container_port
+        self.container_port = 8000
         self.container_id = ''
         self.cmd = None
         self.entry_point = None
@@ -56,13 +56,11 @@ class DockerSpawner(ServerSpawner):
 
     def _get_envs(self) -> dict:
         all_env_vars = {}
-        env_vars = self.server.environment_type.env_vars or {}
         # get user defined env vars
         all_env_vars.update(self.server.env_vars or {})
         # get admin defined env vars
-        all_env_vars.update({key: val.format(server=self.server) for key, val in env_vars.items()})
         all_env_vars['TZ'] = self._get_user_timezone()
-        logger.info("Environment variables to create a container:'{}'".format(env_vars))
+        logger.info("Environment variables to create a container:'{}'".format(all_env_vars))
         return all_env_vars
 
     def start(self, entry_point=None, command=None, restart=None) -> None:
@@ -90,22 +88,19 @@ class DockerSpawner(ServerSpawner):
 
     def _get_cmd(self, command=None):
         if not command:
-            command = '''-key={server.project.owner.auth_token.key} -ns={server.project.owner.username}
+            command = '''/runner -key={server.project.owner.auth_token.key} -ns={server.project.owner.username}
             -projectID={server.project.pk} -serverID={server.pk} -root={domain}'''.format(
                 server=self.server,
                 domain=Site.objects.get_current()
             )
-            cmd = self.server.environment_type.cmd.format(**self.server.config).split(' ', 1)
-            cmd.insert(1, command)
-            cmd = ' '.join(cmd)
-            return cmd
+            return command
         return command
 
     def _get_host_config(self):
-        binds = ['{}:{}'.format(self.server.volume_path, self.server.environment_type.container_path)]
+        binds = ['{}:{}'.format(self.server.volume_path, "/resources")]
         ssh_path = self._get_ssh_path()
         if ssh_path:
-            binds.append('{}:{}/.ssh'.format(ssh_path, self.server.environment_type.container_path))
+            binds.append('{}:{}/.ssh'.format(ssh_path, "/resources"))
         if self.server.startup_script:
             binds.append('{}:/start.sh'.format(
                 str(Path(self.server.volume_path).joinpath(self.server.startup_script))))
@@ -122,10 +117,10 @@ class DockerSpawner(ServerSpawner):
     def _prepare_tar_file(self):
         tar_stream = BytesIO()
         tar = tarfile.TarFile.xzopen(name="server.tar.xz", fileobj=tar_stream, mode="w")
-        tar.add(self.server.volume_path, arcname=self.server.environment_type.container_path)
+        tar.add(self.server.volume_path, arcname="/resources")
         ssh_path = self._get_ssh_path()
         if ssh_path:
-            tar.add(ssh_path, arcname=self.server.environment_type.container_path)
+            tar.add(ssh_path, arcname="/resources")
         tar.close()
         tar_stream.seek(0)
         return tar_stream
@@ -145,12 +140,11 @@ class DockerSpawner(ServerSpawner):
 
     def _create_container_config(self):
         config = dict(
-            image=self.server.environment_type.image_name,
+            image=self.server.image_name,
             command=self.cmd,
             environment=self._get_envs(),
             name=self.server.container_name,
             host_config=self.client.create_host_config(**self._get_host_config()),
-            working_dir=self.server.environment_type.work_dir,
             ports=[self.container_port],
             cpu_shares=0,
         )

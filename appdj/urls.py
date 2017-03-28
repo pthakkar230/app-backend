@@ -29,7 +29,6 @@ from users import views as user_views
 router = routers.DefaultRouter()
 
 router.register(r'servers/options/resources', servers_views.EnvironmentResourceViewSet)
-router.register(r'servers/options/types', servers_views.EnvironmentTypeViewSet)
 router.register(r'users', user_views.UserViewSet)
 user_router = routers.NestedSimpleRouter(router, r'users', lookup='user')
 user_router.register(r'emails', user_views.EmailViewSet)
@@ -58,7 +57,7 @@ urlpatterns = [
     url(r'^swagger/$', schema_view),
     url(r'^admin/', admin.site.urls),
     url(r'^actions/', include('actions.urls')),
-    url(r'^servers/(?P<server_pk>[^/.]+)/', servers_views.server_internal_details, name="server_internal"),
+    url(r'^servers/(?P<server_pk>[^/.]+)$', servers_views.server_internal_details, name="server_internal"),
     url(r'^(?P<namespace>[\w-]+)/', include(router.urls)),
     url(r'^(?P<namespace>[\w-]+)/', include(project_router.urls)),
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/synced-resources/$',
