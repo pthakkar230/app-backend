@@ -6,7 +6,7 @@ from projects.tests.factories import CollaboratorFactory
 from servers.tests.fake_docker_api_client.fake_api import FAKE_CONTAINER_ID
 from ..models import Server
 from ..spawners import DockerSpawner
-from .factories import EnvironmentTypeFactory, EnvironmentResourcesFactory, ServerFactory
+from .factories import EnvironmentResourcesFactory, ServerFactory
 from .fake_docker_api_client.fake_api_client import make_fake_client
 
 
@@ -15,17 +15,11 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
         self.server = ServerFactory(
-            environment_type=EnvironmentTypeFactory(
-                image_name='test',
-                cmd='/runner -kernel=python3 -type=http -code="from {module} import {method}"',
-                work_dir='/test',
-                env_vars={'test': 'test', 'test2': '{server.name}'},
-                container_path='/resources',
-                container_port=8000
-            ),
+            image_name='test',
             environment_resources=EnvironmentResourcesFactory(
                 memory=512
             ),
+            env_vars={'test': 'test'},
             project=collaborator.project,
             config={
                 'method': 'test',
@@ -39,7 +33,6 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         expected = {
             'test': 'test',
             'TZ': 'UTC',
-            'test2': self.server.name
         }
         self.assertEqual(self.spawner._get_envs(), expected)
 
@@ -89,11 +82,10 @@ class TestDockerSpawnerForModel(TransactionTestCase):
             'environment': {},
             'name': self.server.container_name,
             'host_config': self.spawner.client.create_host_config(**{}),
-            'working_dir': '/test',
             'ports': [8000],
             'cpu_shares': 0
         }
-        self.assertEqual(self.spawner._create_container_config(), expected)
+        self.assertDictEqual(self.spawner._create_container_config(), expected)
 
     def test_get_container_success(self):
         self.spawner._get_container()

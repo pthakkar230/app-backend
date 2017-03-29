@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase
 from projects.tests.factories import CollaboratorFactory
 
 from ..models import Server
-from .factories import EnvironmentTypeFactory, EnvironmentResourcesFactory, ServerStatisticsFactory,\
+from .factories import EnvironmentResourcesFactory, ServerStatisticsFactory,\
     ServerRunStatisticsFactory, ServerFactory
 
 
@@ -16,7 +16,6 @@ class ServerTest(APITestCase):
         self.project = collaborator.project
         self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
-        self.env_type = EnvironmentTypeFactory()
         self.env_res = EnvironmentResourcesFactory()
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 
@@ -24,7 +23,6 @@ class ServerTest(APITestCase):
         url = reverse('server-list', kwargs=self.url_kwargs)
         data = dict(
             name='test',
-            environment_type=str(self.env_type.pk),
             environment_resources=str(self.env_res.pk),
             project=str(self.project.pk),
             connected=[]
@@ -59,7 +57,6 @@ class ServerTest(APITestCase):
         url = reverse('server-detail', kwargs=self.url_kwargs)
         data = dict(
             name='test',
-            environment_type=str(self.env_type.pk),
             environment_resources=str(self.env_res.pk),
             connected=[]
         )
