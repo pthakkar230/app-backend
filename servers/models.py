@@ -35,7 +35,6 @@ class Server(models.Model):
 
     private_ip = models.CharField(max_length=19)
     public_ip = models.CharField(max_length=19)
-    port = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=50)
     container_id = models.CharField(max_length=100, blank=True)

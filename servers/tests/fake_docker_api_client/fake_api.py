@@ -179,6 +179,30 @@ def get_fake_inspect_image():
             "VolumesFrom": "",
             "WorkingDir": ""
         },
+        'Config':
+        {
+            "ExposedPorts": {
+                "8000/tcp": {},
+            },
+            "Hostname": "",
+            "User": "",
+            "Memory": 0,
+            "MemorySwap": 0,
+            "AttachStdin": False,
+            "AttachStdout": False,
+            "AttachStderr": False,
+            "PortSpecs": "",
+            "Tty": True,
+            "OpenStdin": True,
+            "StdinOnce": False,
+            "Env": "",
+            "Cmd": ["/bin/bash"],
+            "Dns": "",
+            "Image": "base",
+            "Volumes": "",
+            "VolumesFrom": "",
+            "WorkingDir": ""
+        },
         'Size': 6823592
     }
     return status_code, response

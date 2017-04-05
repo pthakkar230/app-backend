@@ -17,6 +17,9 @@ class ServerViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ServerSerializer
     filter_fields = ("name",)
 
+    def get_queryset(self):
+        return super().get_queryset().filter(project_id=self.kwargs.get('project_pk'))
+
 
 @api_view(['post'])
 def start(request, project_pk, server_pk):
@@ -103,8 +106,9 @@ def server_internal_details(request, server_pk):
     server = get_object_or_404(models.Server, pk=server_pk)
     data = {'server': '', 'container_name': ''}
     if server.status == server.RUNNING:
+        server_ip = server.get_private_ip()
         data = {
-            'server': '%s:%s' % (server.get_private_ip(), server.port),
+            'server': {service: '%s:%s' % (server_ip, port) for service, port in server.config.get('ports', {}).items()},
             'container_name': (server.container_name or '')
         }
 

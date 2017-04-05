@@ -93,7 +93,13 @@ class ServerTest(APITestCase):
         url = reverse('server_internal', kwargs={'server_pk': server.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        expected = {'server': '%s:%s' % (server.private_ip, server.port), 'container_name': server.container_name}
+        server_ip = server.get_private_ip()
+        expected = {
+            'server': {
+                service: '%s:%s' % (server_ip, port) for service, port in server.config.get('ports', {}).items()
+            },
+            'container_name': server.container_name
+        }
         self.assertDictEqual(expected, response.data)
 
     def test_server_internal_not_running(self):

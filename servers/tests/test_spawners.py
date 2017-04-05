@@ -55,7 +55,7 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         _is_swarm.return_value = False
         expected = {
             'mem_limit': '512m',
-            'port_bindings': {8000: None},
+            'port_bindings': {'8000': None},
             'binds': [
                 '{}:/resources'.format(self.server.volume_path)
             ],
@@ -82,7 +82,7 @@ class TestDockerSpawnerForModel(TransactionTestCase):
             'environment': {},
             'name': self.server.container_name,
             'host_config': self.spawner.client.create_host_config(**{}),
-            'ports': [8000],
+            'ports': ['8000'],
             'cpu_shares': 0
         }
         self.assertDictEqual(self.spawner._create_container_config(), expected)
