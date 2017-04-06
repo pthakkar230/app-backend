@@ -22,3 +22,4 @@ def stop_server(server_pk):
 @shared_task()
 def terminate_server(server_pk):
     server_action('terminate', server_pk)
+    Server.objects.filter(pk=server_pk).delete()

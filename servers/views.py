@@ -2,8 +2,9 @@ from django.db.models import Sum, Count, Max, F
 from django.db.models.functions import Coalesce, Now
 from rest_framework import status, views, viewsets
 from rest_framework.generics import get_object_or_404
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 
 from base.views import ProjectMixin, UUIDRegexMixin, ServerMixin
 from projects.models import Project
@@ -15,6 +16,9 @@ class ServerViewSet(viewsets.ModelViewSet):
     queryset = models.Server.objects.all()
     serializer_class = serializers.ServerSerializer
     filter_fields = ("name",)
+
+    def get_queryset(self):
+        return super().get_queryset().filter(project_id=self.kwargs.get('project_pk'))
 
 
 @api_view(['post'])
@@ -78,11 +82,6 @@ class SshTunnelViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):
     serializer_class = serializers.SshTunnelSerializer
 
 
-class EnvironmentTypeViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
-    queryset = models.EnvironmentType.objects.all()
-    serializer_class = serializers.EnvironmentTypeSerializer
-
-
 class EnvironmentResourceViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
     queryset = models.EnvironmentResource.objects.all()
     serializer_class = serializers.EnvironmentResourceSerializer
@@ -102,12 +101,14 @@ class IsAllowed(views.APIView):
 
 
 @api_view(['GET'], exclude_from_schema=True)
+@permission_classes((AllowAny,))
 def server_internal_details(request, server_pk):
     server = get_object_or_404(models.Server, pk=server_pk)
     data = {'server': '', 'container_name': ''}
     if server.status == server.RUNNING:
+        server_ip = server.get_private_ip()
         data = {
-            'server': '%s:%s' % (server.get_private_ip(), server.port),
+            'server': {service: '%s:%s' % (server_ip, port) for service, port in server.config.get('ports', {}).items()},
             'container_name': (server.container_name or '')
         }
 
