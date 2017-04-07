@@ -4,7 +4,7 @@
 [![Code Climate](https://codeclimate.com/github/3Blades/app-backend/badges/gpa.svg)](https://codeclimate.com/github/3Blades/app-backend)
 [![Code Health](https://landscape.io/github/3Blades/app-backend/master/landscape.svg?style=flat)](https://landscape.io/github/3Blades/app-backend/master)
 [![Requirements Status](https://requires.io/github/3Blades/app-backend/requirements.svg?branch=master)](https://requires.io/github/3Blades/app-backend/requirements/?branch=master)
-[![slack in](https://slackin-pypmyuhqds.now.sh/badge.svg)](https://slackin-pypmyuhqds.now.sh/)
+[![slack in](https://now-examples-slackin-bmxfoxjsoi.now.sh/badge.svg)](https://now-examples-slackin-bmxfoxjsoi.now.sh/)
 
 # 3Blades Backend Server
 
@@ -229,8 +229,6 @@ docker.service - Docker Application Container Engine
 As you can see above, -H tcp://0.0.0.0:2375 is configured which allows the docker daemon to accept connections from other IPv4 addresses. Edit the service file if you do not see this setting in place:
 
     nano /lib/systemd/system/docker.service
-
-###
 
 ### Launch clean stack
 
