@@ -86,14 +86,14 @@ If using Debian or Ubuntu Linux distributions, you may have to install dependenc
 
 We maintain an `docker-compose.yml` file to launch our full stack. Launching the full stack may be necessary to support integration testing, such as creating new user servers. Services include:
 
-[Postgres](https://hub.docker.com/_/postgres/)
-[Redis](https://hub.docker.com/_/redis/)
-[RabbitMQ](https://hub.docker.com/_/rabbitmq/)
-[Notificaitons Server](https://hub.docker.com/r/3blades/notifications-server)
-[Logspout](https://hub.docker.com/r/3blades/logspout/)
-[Celery](https://hub.docker.com/r/3blades/app-backend)
-[API](https://hub.docker.com/r/3blades/app-backend)
-[OpenResty](https://hub.docker.com/r/3blades/)
+- [Postgres](https://hub.docker.com/_/postgres/)
+- [Redis](https://hub.docker.com/_/redis/)
+- [RabbitMQ](https://hub.docker.com/_/rabbitmq/)
+- [Notificaitons Server](https://hub.docker.com/r/3blades/notifications-server)
+- [Logspout](https://hub.docker.com/r/3blades/logspout/)
+- [Celery](https://hub.docker.com/r/3blades/app-backend)
+- [API](https://hub.docker.com/r/3blades/app-backend)
+- [OpenResty](https://hub.docker.com/r/3blades/)
 
 Export environment variables listed below with your local settings, for example:
 
@@ -114,7 +114,7 @@ Configure virtualenv:
 
 Install dev dependencies:
 
-    pip install -r ./requirements/dev.txt
+    pip3 install -r ./requirements/dev.txt
 
 Use the following command to launch the full stack with docker compose (-d for detached mode):
 
