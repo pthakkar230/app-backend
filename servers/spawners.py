@@ -5,6 +5,7 @@ import tarfile
 from io import BytesIO
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.utils.functional import cached_property
 from docker import from_env
@@ -47,7 +48,7 @@ class DockerSpawner(ServerSpawner):
     def __init__(self, server, client=None):
         super().__init__(server)
         self.client = client or from_env()
-        self.container_port = self.server.environment_type.container_port
+        self.container_port = self.server.config.get('port') or settings.SERVER_PORT
         self.container_id = ''
         self.cmd = None
         self.entry_point = None
@@ -56,19 +57,15 @@ class DockerSpawner(ServerSpawner):
 
     def _get_envs(self) -> dict:
         all_env_vars = {}
-        env_vars = self.server.environment_type.env_vars or {}
         # get user defined env vars
         all_env_vars.update(self.server.env_vars or {})
         # get admin defined env vars
-        all_env_vars.update({key: val.format(server=self.server) for key, val in env_vars.items()})
         all_env_vars['TZ'] = self._get_user_timezone()
-        logger.info("Environment variables to create a container:'{}'".format(env_vars))
+        logger.info("Environment variables to create a container:'{}'".format(all_env_vars))
         return all_env_vars
 
-    def start(self, entry_point=None, command=None, restart=None) -> None:
-        self.entry_point = entry_point
-        self.cmd = self._get_cmd(command=command)
-        self.restart = restart
+    def start(self) -> None:
+        self.cmd = self._get_cmd()
         if self._is_swarm and not self._is_network_exists():
             self._create_network()
         try:
@@ -88,30 +85,37 @@ class DockerSpawner(ServerSpawner):
             self.server.status = self.server.ERROR
             raise  # this is part of celery task, we need to know if it fails
 
-    def _get_cmd(self, command=None):
-        if not command:
-            command = '''-key={server.project.owner.auth_token.key} -ns={server.project.owner.username}
-            -projectID={server.project.pk} -serverID={server.pk} -root={domain}'''.format(
-                server=self.server,
-                domain=Site.objects.get_current()
-            )
-            cmd = self.server.environment_type.cmd.format(**self.server.config).split(' ', 1)
-            cmd.insert(1, command)
-            cmd = ' '.join(cmd)
-            return cmd
+    def _get_cmd(self):
+        command = '''/runner -key={server.project.owner.auth_token.key} -ns={server.project.owner.username}
+        -projectID={server.project.pk} -serverID={server.pk} -root={domain}'''.format(
+            server=self.server,
+            domain=Site.objects.get_current()
+        )
+        if 'script' in self.server.config:
+            command += " " + "--script=" + self.server.config["script"]
+        if 'function' in self.server.config:
+            command += " " + "--function=" + self.server.config["function"]
+        if ("type" in self.server.config) and (self.server.config["type"] in settings.SERVER_COMMANDS):
+            command += " " + settings.SERVER_COMMANDS[self.server.config["type"]]
+        elif "type" in self.server.config:
+            command += " --type=" + self.server.config["type"]
+        elif "command" in self.server.config:
+            command += " " + self.server.config["command"]
         return command
 
     def _get_host_config(self):
-        binds = ['{}:{}'.format(self.server.volume_path, self.server.environment_type.container_path)]
+        binds = ['{}:{}'.format(self.server.volume_path, settings.SERVER_RESOURCE_DIR)]
         ssh_path = self._get_ssh_path()
         if ssh_path:
-            binds.append('{}:{}/.ssh'.format(ssh_path, self.server.environment_type.container_path))
+            binds.append('{}:{}/.ssh'.format(ssh_path, settings.SERVER_RESOURCE_DIR))
         if self.server.startup_script:
             binds.append('{}:/start.sh'.format(
                 str(Path(self.server.volume_path).joinpath(self.server.startup_script))))
+        ports = {port: None for port in self._get_exposed_ports()}
+        ports[self.container_port] = None
         config = dict(
             mem_limit='{}m'.format(self.server.environment_resources.memory),
-            port_bindings={self.container_port: None},
+            port_bindings=ports,
             binds=binds,
             restart_policy=self.restart,
         )
@@ -122,10 +126,10 @@ class DockerSpawner(ServerSpawner):
     def _prepare_tar_file(self):
         tar_stream = BytesIO()
         tar = tarfile.TarFile.xzopen(name="server.tar.xz", fileobj=tar_stream, mode="w")
-        tar.add(self.server.volume_path, arcname=self.server.environment_type.container_path)
+        tar.add(self.server.volume_path, arcname=settings.SERVER_RESOURCE_DIR)
         ssh_path = self._get_ssh_path()
         if ssh_path:
-            tar.add(ssh_path, arcname=self.server.environment_type.container_path)
+            tar.add(ssh_path, arcname=settings.SERVER_RESOURCE_DIR)
         tar.close()
         tar_stream.seek(0)
         return tar_stream
@@ -145,12 +149,11 @@ class DockerSpawner(ServerSpawner):
 
     def _create_container_config(self):
         config = dict(
-            image=self.server.environment_type.image_name,
+            image=self.server.image_name,
             command=self.cmd,
             environment=self._get_envs(),
             name=self.server.container_name,
             host_config=self.client.create_host_config(**self._get_host_config()),
-            working_dir=self.server.environment_type.work_dir,
             ports=[self.container_port],
             cpu_shares=0,
         )
@@ -201,13 +204,18 @@ class DockerSpawner(ServerSpawner):
         return container
 
     def _set_ip_and_port(self):
-        resp = self.client.port(self.server.container_name, self.container_port)
+        resp = self.client.inspect_container(self.server.container_name)
         if resp is None:
             raise RuntimeError("Failed to get port info for %s" % self.server.container_name)
-        ip = resp[0]['HostIp']
-        port = resp[0]['HostPort']
-        self.server.private_ip = ip
-        self.server.port = port
+        network_settings = resp.get("NetworkSettings", {})
+        ports = network_settings.get("Ports")
+        if ports is None:
+            return
+        self.server.config['ports'] = {}
+        for port, mapping in ports.items():
+            port = port.split("/")[0]
+            self.server.config['ports'][settings.SERVER_PORT_MAPPING[port]] = mapping[0]["HostPort"]
+        self.server.private_ip = mapping[0]["HostIp"]
         self.server.save()
 
     def terminate(self) -> None:
@@ -300,6 +308,15 @@ class DockerSpawner(ServerSpawner):
         except APIError:
             return False
         return "swarm" in resp.get("Version", "")
+
+    def _get_exposed_ports(self):
+        result = [self.container_port]
+        try:
+            resp = self.client.inspect_image(self.server.image_name)
+        except APIError:
+            return result
+        result.extend([k.split('/')[0] for k in resp["Config"]["ExposedPorts"]])
+        return result
 
 
 class ServerDummySpawner(ServerSpawner):

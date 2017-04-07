@@ -25,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 SECRET_KEY = os.environ.get('SECRET_KEY', 'test')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = []
 
@@ -274,4 +274,13 @@ MIGRATION_MODULES = {
 
 ABSOLUTE_URL_OVERRIDES = {
     'auth.user': lambda o, n: reverse_lazy('user-detail', kwargs={'namespace': n.name, 'pk': o.pk}),
+}
+
+
+# Server settings
+SERVER_RESOURCE_DIR = os.environ.get("SERVER_RESOURCE_DIR", "/resources")
+SERVER_PORT = os.environ.get("SERVER_PORT", '8000')
+SERVER_PORT_MAPPING = {'8888': "jupyter", '6006': "tensorflow", '8000': 'restful'}
+SERVER_COMMANDS = {
+    "jupyter": "jupyter notebook --no-browser --NotebookApp.token=''",
 }

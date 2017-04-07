@@ -4,7 +4,7 @@ from django.test import TestCase
 from django_redis import get_redis_connection
 
 from projects.tests.factories import CollaboratorFactory
-from servers.models import Server, EnvironmentType
+from servers.models import Server
 
 
 class TestServer(TestCase):
@@ -20,9 +20,8 @@ class TestServer(TestCase):
         self.assertEqual(str(instance), instance.name)
 
     def test_container_name(self):
-        env_type = EnvironmentType(name='test')
         expected = "server_00000000-0000-0000-0000-000000000000_test"
-        server = Server(id=self.pk, environment_type=env_type)
+        server = Server(name="test", id=self.pk)
         self.assertEqual(server.container_name, expected)
 
     def test_volume_path(self):

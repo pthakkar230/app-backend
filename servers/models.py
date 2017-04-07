@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField, JSONField
@@ -34,9 +35,7 @@ class Server(models.Model):
 
     private_ip = models.CharField(max_length=19)
     public_ip = models.CharField(max_length=19)
-    port = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    environment_type = models.ForeignKey('EnvironmentType')
     name = models.CharField(max_length=50)
     container_id = models.CharField(max_length=100, blank=True)
     environment_resources = models.ForeignKey('EnvironmentResource')
@@ -46,7 +45,8 @@ class Server(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='servers')
     config = JSONField(default={})
     auto_restart = models.BooleanField(default=False)
-    connected = models.ManyToManyField('self', related_name='servers')
+    connected = models.ManyToManyField('self', blank=True, related_name='servers')
+    image_name = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.name
@@ -59,7 +59,7 @@ class Server(models.Model):
 
     @property
     def container_name(self):
-        return self.CONTAINER_NAME_FORMAT.format(self.pk, self.environment_type.name)
+        return self.CONTAINER_NAME_FORMAT.format(self.pk, self.name)
 
     @property
     def volume_path(self):
@@ -110,26 +110,10 @@ class Server(models.Model):
     def is_running(self):
         return self.status == self.RUNNING
 
-
-class EnvironmentType(models.Model):
-    name = models.CharField(unique=True, max_length=20)
-    image_name = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-    cmd = models.CharField(max_length=512, blank=True)
-    description = models.CharField(max_length=200, blank=True)
-    work_dir = models.CharField(max_length=250, blank=True)
-    env_vars = HStoreField(null=True)
-    container_path = models.CharField(max_length=250, blank=True)
-    container_port = models.IntegerField(blank=True, null=True)
-    active = models.BooleanField(default=True)
-    urldoc = models.CharField(max_length=200, blank=True)
-    usage = HStoreField(null=True)
-
-    def __str__(self):
-        return self.name
-
-    def get_absolute_url(self, namespace: Namespace):
-        return reverse('environmenttype-detail', kwargs={'namespace': namespace.name, 'pk': str(self.pk)})
+    def get_private_ip(self):
+        if self.private_ip != "0.0.0.0":
+            return self.private_ip
+        return urlsplit(os.environ.get("DOCKER_HOST")).hostname
 
 
 class EnvironmentResource(models.Model):

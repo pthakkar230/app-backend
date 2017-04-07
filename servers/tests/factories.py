@@ -8,15 +8,6 @@ from servers import models
 from users.tests.factories import UserFactory
 
 
-class EnvironmentTypeFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.EnvironmentType
-
-    name = factory.Sequence(lambda n: 'project_{}'.format(n))
-    image_name = '3blades/ipython-notebook'
-    cmd = '/runner -type=http'
-
-
 class EnvironmentResourcesFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.EnvironmentResource
@@ -34,10 +25,10 @@ class ServerFactory(factory.django.DjangoModelFactory):
     private_ip = '127.0.0.1'
     public_ip = '127.0.0.1'
     name = factory.Faker('name')
-    environment_type = factory.SubFactory(EnvironmentTypeFactory)
     environment_resources = factory.SubFactory(EnvironmentResourcesFactory)
     project = factory.SubFactory(ProjectFactory)
     created_by = factory.SubFactory(UserFactory)
+    image_name = '3blades/server'
 
 
 class ServerRunStatisticsFactory(factory.django.DjangoModelFactory):
