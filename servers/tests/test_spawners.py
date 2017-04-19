@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 
 from django.test import TransactionTestCase
@@ -22,8 +23,8 @@ class TestDockerSpawnerForModel(TransactionTestCase):
             env_vars={'test': 'test'},
             project=collaborator.project,
             config={
-                'method': 'test',
-                'module': 'test'
+                'function': 'test',
+                'script': 'test.py'
             }
         )
         docker_client = make_fake_client()
@@ -42,13 +43,40 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         self.spawner.start()
         self.assertEqual(self.server.container_id, FAKE_CONTAINER_ID)
 
-    def test_get_cmd(self):
+    def test_get_cmd_restful(self):
+        self.server.config['type'] = 'restful'
         cmd = self.spawner._get_cmd()
         self.assertIn("runner", cmd)
         self.assertIn(self.user.auth_token.key, cmd)
         self.assertIn(self.user.username, cmd)
         self.assertIn(str(self.server.project.pk), cmd)
         self.assertIn(str(self.server.pk), cmd)
+        self.assertIn(self.server.config["function"], cmd)
+        self.assertIn(self.server.config["script"], cmd)
+
+    def test_get_cmd_jupyter(self):
+        self.server.config = {
+            "type": "jupyter"
+        }
+        cmd = self.spawner._get_cmd()
+        self.assertIn("runner", cmd)
+        self.assertIn(self.user.auth_token.key, cmd)
+        self.assertIn(self.user.username, cmd)
+        self.assertIn(str(self.server.project.pk), cmd)
+        self.assertIn(str(self.server.pk), cmd)
+        self.assertIn(self.server.config["type"], cmd)
+
+    def test_get_command_generic(self):
+        self.server.config = {
+            'command': 'python run.py'
+        }
+        cmd = self.spawner._get_cmd()
+        self.assertIn("runner", cmd)
+        self.assertIn(self.user.auth_token.key, cmd)
+        self.assertIn(self.user.username, cmd)
+        self.assertIn(str(self.server.project.pk), cmd)
+        self.assertIn(str(self.server.pk), cmd)
+        self.assertIn(self.server.config["command"], cmd)
 
     @patch('servers.spawners.DockerSpawner._is_swarm')
     def test_get_host_config(self, _is_swarm):
@@ -96,3 +124,40 @@ class TestDockerSpawnerForModel(TransactionTestCase):
 
     def test_stop(self):
         self.spawner.stop()
+
+    def test_get_ssh_path(self):
+        expected_ssh_path = os.path.abspath(os.path.join(self.server.volume_path, '..', '.ssh'))
+        try:
+            os.makedirs(expected_ssh_path)
+        except OSError:
+            pass
+        ssh_path = self.spawner._get_ssh_path()
+        self.assertEqual(ssh_path, expected_ssh_path)
+
+    def test_compare_container_env(self):
+        container = {
+            'Config': {
+                'Env': ['TEST=TEST=1', 'TEST2=1'],
+            }
+        }
+
+        self.server.env_vars = {
+            'TEST': 'TEST=1',
+            'TEST2': '1',
+        }
+        self.assertTrue(self.spawner._compare_container_env(container))
+
+    def test_get_user_timezone(self):
+        self.assertEqual(self.spawner._get_user_timezone(), 'UTC')
+        self.user.profile.timezone = 'EDT'
+        self.user.profile.save()
+        self.assertEqual(self.spawner._get_user_timezone(), 'EDT')
+
+    def test_connected_links(self):
+        conn = ServerFactory()
+        conn.status = Server.RUNNING
+        self.server.connected.add(conn)
+        self.server.save()
+        links = self.spawner._connected_links()
+        self.assertIn(conn.container_name, links)
+        self.assertEqual(links[conn.container_name], conn.name.lower())
