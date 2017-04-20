@@ -1,4 +1,5 @@
 import abc
+import os
 
 import logging
 import tarfile
@@ -259,11 +260,8 @@ class DockerSpawner(ServerSpawner):
             }[result['State']['Status']]
 
     def _get_ssh_path(self):
-        try:
-            ssh_path = Path(self.server.volume_path).joinpath('..', '.ssh').resolve()
-        except FileNotFoundError:
-            return ''
-        if ssh_path.exists():
+        ssh_path = os.path.abspath(os.path.join(self.server.volume_path, '..', '.ssh'))
+        if os.path.exists(ssh_path):
             return str(ssh_path)
         return ''
 
@@ -273,10 +271,9 @@ class DockerSpawner(ServerSpawner):
 
     def _get_user_timezone(self):
         tz = 'UTC'
-        project = self.server.project
-        owner = project.owner
-        if owner.profile and owner.profile.timezone:
-            tz = owner.profile.timezone
+        owner_profile = self.server.project.owner.profile
+        if owner_profile and owner_profile.timezone:
+            tz = owner_profile.timezone
         return tz
 
     def _connected_links(self):

@@ -22,6 +22,7 @@ services:
       - db
       - cache
       - broker
+    entrypoint: ''
   db:
     image: postgres:alpine
     ports:
