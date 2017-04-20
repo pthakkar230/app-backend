@@ -1,3 +1,7 @@
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_STORAGE_BUCKET_NAME=
 C_ROOT=1
 DATABASE_URL=postgres://postgres:@db:5432/postgres
 DEBUG=True
@@ -5,3 +9,4 @@ REDIS_URL=redis://cache:6379/0
 DJANGO_SETTINGS_MODULE=appdj.settings.prod
 DOCKER_HOST=tcp://my_ip_address:2375
 RABBITMQ_URL=amqp://broker
+TBS_HOST=
