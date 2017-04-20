@@ -133,6 +133,10 @@ Create admin (superuser) user:
 
     sudo docker-compose exec api /srv/env/bin/python manage.py createsuperuser
 
+Collect static files:
+
+    sudo docker-compose exec api /srv/env/bin/python manage.py collectstatic
+
 Access API docs page and login:
 
     http://localhost:5000/swagger/
