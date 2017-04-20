@@ -113,7 +113,7 @@ A volume mount is used to persist files used by docker containers. By default, `
 
 Use the following command to launch the full stack with docker compose (-d for detached mode):
 
-    docker-compose up -d
+    sudo docker-compose up -d
 
 Verify docker containers with `docker ps`:
 
@@ -131,7 +131,7 @@ c06b9d4c73ae        gliderlabs/logspout                   "/bin/logspout"       
 
 Create admin (superuser) user:
 
-    docker-compose exec api /srv/env/bin/python manage.py createsuperuser
+    sudo docker-compose exec api /srv/env/bin/python manage.py createsuperuser
 
 Access API docs page and login:
 
