@@ -16,21 +16,26 @@ class ServerTest(APITestCase):
         self.project = collaborator.project
         self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.url_kwargs = {'namespace': self.user.username, 'project_pk': str(self.project.pk)}
-        self.env_res = EnvironmentResourcesFactory()
+        self.env_res = EnvironmentResourcesFactory(name='Nano')
+        EnvironmentResourcesFactory()
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
 
     def test_create_server(self):
         url = reverse('server-list', kwargs=self.url_kwargs)
         data = dict(
             name='test',
-            environment_resources=str(self.env_res.pk),
             project=str(self.project.pk),
-            connected=[]
+            connected=[],
+            config={'type': 'jupyter'},
         )
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        db_server = Server.objects.get()
+        self.assertEqual(response.data['endpoint'], 'http://example.com/server/{}/jupyter/tree'.format(db_server.id))
         self.assertEqual(Server.objects.count(), 1)
-        self.assertEqual(Server.objects.get().name, data['name'])
+        self.assertEqual(db_server.name, data['name'])
+        self.assertEqual(db_server.environment_resources, self.env_res)
+        self.assertEqual(db_server.environment_resources.name, 'Nano')
 
     def test_list_servers(self):
         servers_count = 4

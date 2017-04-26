@@ -17,6 +17,7 @@ from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from rest_framework.decorators import api_view
 from rest_framework.exceptions import NotFound, APIException
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
 from rest_framework_nested import routers
@@ -81,10 +82,12 @@ urlpatterns = [
 ]
 
 
+@api_view()
 def handler404(request):
     raise NotFound()
 
 
+@api_view()
 def handler500(request):
     raise APIException(detail="Internal Server Error", code=500)
 
