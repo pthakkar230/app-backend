@@ -4,7 +4,7 @@
 [![Code Climate](https://codeclimate.com/github/3Blades/app-backend/badges/gpa.svg)](https://codeclimate.com/github/3Blades/app-backend)
 [![Code Health](https://landscape.io/github/3Blades/app-backend/master/landscape.svg?style=flat)](https://landscape.io/github/3Blades/app-backend/master)
 [![Requirements Status](https://requires.io/github/3Blades/app-backend/requirements.svg?branch=master)](https://requires.io/github/3Blades/app-backend/requirements/?branch=master)
-[![slack in](https://now-examples-slackin-bmxfoxjsoi.now.sh/badge.svg)](https://now-examples-slackin-bmxfoxjsoi.now.sh/)
+[![slack in](https://slack.3blades.io/badge.svg)](https://slack.3blades.io)
 
 # 3Blades Backend Server
 
