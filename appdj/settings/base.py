@@ -283,6 +283,7 @@ ABSOLUTE_URL_OVERRIDES = {
 SERVER_RESOURCE_DIR = os.environ.get("SERVER_RESOURCE_DIR", "/resources")
 SERVER_PORT = os.environ.get("SERVER_PORT", '8000')
 SERVER_PORT_MAPPING = {'8888': "jupyter", '6006': "tensorflow", '8000': 'restful'}
+SERVER_ENDPOINT_URLS = {'jupyter': '/jupyter/tree', 'restful': '/restfull/'}
 SERVER_COMMANDS = {
     "jupyter": "jupyter notebook --no-browser --NotebookApp.token=''",
 }
