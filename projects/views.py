@@ -13,13 +13,13 @@ class ProjectViewSet(NamespaceMixin, viewsets.ModelViewSet):
     ordering_fileds = ('name',)
 
 
-class FileViewSet(NamespaceMixin, viewsets.ModelViewSet):
+class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.select_related('author', 'project')
     serializer_class = FileSerializer
     filter_fields = ('path',)
 
 
-class CollaboratorViewSet(NamespaceMixin, viewsets.ModelViewSet):
+class CollaboratorViewSet(viewsets.ModelViewSet):
     queryset = Collaborator.objects.all()
     serializer_class = CollaboratorSerializer
 
@@ -27,7 +27,7 @@ class CollaboratorViewSet(NamespaceMixin, viewsets.ModelViewSet):
         return super().get_queryset().filter(project_id=self.kwargs.get('project_pk'))
 
 
-class SyncedResourceViewSet(NamespaceMixin, viewsets.ModelViewSet):
+class SyncedResourceViewSet(viewsets.ModelViewSet):
     queryset = SyncedResource.objects.all()
     serializer_class = SyncedResourceSerializer
 
