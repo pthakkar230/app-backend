@@ -4,6 +4,7 @@ from django.dispatch import receiver
 
 from rest_framework.authtoken.models import Token
 
+from utils import create_ssh_key
 from .models import UserProfile
 
 
@@ -17,3 +18,9 @@ def create_user_profile(sender, instance, created, **kwargs):
 def create_user_token(sender, instance, created, **kwargs):
     if created:
         Token.objects.create(user=instance)
+
+
+@receiver(post_save, sender=get_user_model())
+def create_user_ssh_key(sender, instance, created, **kwargs):
+    if created:
+        create_ssh_key(instance)
