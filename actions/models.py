@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.urls import reverse
+from requests import Session, Request
 
 from base.namespace import Namespace
 
@@ -15,6 +16,7 @@ class Action(models.Model):
     CANCELLED = 3
     SUCCESS = 4
     FAILED = 5
+    CREATED = 6
 
     STATE_CHOICES = (
         (PENDING, "Pending"),
@@ -23,6 +25,7 @@ class Action(models.Model):
         (CANCELLED, "Cancelled"),
         (SUCCESS, "Success"),
         (FAILED, "Failed"),
+        (CREATED, "Created"),
     )
 
     path = models.CharField(max_length=255)
@@ -45,6 +48,9 @@ class Action(models.Model):
     class Meta:
         ordering = ('-start_date',)
 
+    def __str__(self):
+        return self.action
+
     def get_absolute_url(self, namespace: Namespace):
         return reverse('action-detail', args=[str(self.id)])
 
@@ -53,3 +59,12 @@ class Action(models.Model):
 
     def content_object_url(self, namespace: Namespace):
         return self.content_object.get_absolute_url(namespace) if self.content_object else ''
+
+    def dispatch(self, url='http://localhost'):
+        url = '{}{}'.format(url, self.path)
+        s = Session()
+        headers = {'AUTHORIZATION': 'Token {}'.format(self.user.auth_token.key)}
+        request = Request(self.method.upper(), url, json=self.payload, headers=headers).prepare()
+        resp = s.send(request)
+        resp.raise_for_status()
+        return resp

@@ -28,7 +28,13 @@ class Project(models.Model):
         return self.name
 
     def get_absolute_url(self, namespace: Namespace):
-        return reverse('project-detail', kwargs={'namespace': namespace.name, 'pk': str(self.id)})
+        return self.get_action_url(namespace, 'detail')
+
+    def get_action_url(self, namespace, action):
+        return reverse(
+            'project-{}'.format(action),
+            kwargs={'namespace': namespace.name, 'pk': str(self.id)}
+        )
 
     @property
     def owner(self):

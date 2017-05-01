@@ -20,32 +20,37 @@ class ActionMiddleware(object):
             body = ujson.loads(request.body)
         except ValueError:
             body = {}
-        action = Action(
+        user = None
+        if hasattr(request, 'user') and not isinstance(request.user, AnonymousUser):
+            user = request.user
+        action, created = Action.objects.get_or_create(
             path=path,
-            method=request.method.lower(),
-            user_agent=request.META.get('HTTP_USER_AGENT', ''),
-            start_date=start,
-            state=Action.PENDING,
-            payload=body,
-            ip=self._get_client_ip(request),
+            user=user,
+            state=Action.CREATED,
+            defaults=dict(
+                action=self._get_action_name(request),
+                method=request.method.lower(),
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                start_date=start,
+                payload=body,
+                ip=self._get_client_ip(request),
+                state=Action.PENDING,
+            )
         )
-        action.save()
         request.action = action
 
         response = self.get_response(request)  # type: HttpResponse
 
         action.refresh_from_db()
-        action.action = self._get_action_name(request)
         self._set_action_state(action, response.status_code)
         self._set_action_object(action, request, response)
-        if hasattr(request, "user"):
-            self._set_action_user(action, request.user)
         action.end_date = timezone.now()
         action.save()
         return response
 
     @staticmethod
     def _set_action_state(action, status_code):
+        action.state = Action.PENDING
         if action.can_be_cancelled:
             action.state = Action.IN_PROGRESS
         elif status.is_client_error(status_code):
@@ -62,11 +67,6 @@ class ActionMiddleware(object):
             content_object = self._get_object_from_post_data(request, response)
             if content_object is not None:
                 action.content_object = content_object
-
-    @staticmethod
-    def _set_action_user(action, user):
-        if not isinstance(user, AnonymousUser):
-            action.user = user
 
     def _get_object_from_post_data(self, request, response):
         model = self._get_model_from_func(request.resolver_match.func)

@@ -26,11 +26,13 @@ from base.swagger.views import get_swagger_view
 from projects import views as project_views
 from servers import views as servers_views
 from users import views as user_views
+from triggers import views as trigger_views
 
 router = routers.DefaultRouter()
 
 router.register(r'servers/options/resources', servers_views.EnvironmentResourceViewSet)
 router.register(r'users', user_views.UserViewSet)
+router.register(r'triggers', trigger_views.TriggerViewSet)
 user_router = routers.NestedSimpleRouter(router, r'users', lookup='user')
 user_router.register(r'emails', user_views.EmailViewSet)
 user_router.register(r'integrations', user_views.IntegrationViewSet)
@@ -56,9 +58,11 @@ urlpatterns = [
     url(r'^auth/jwt-token-verify/$', verify_jwt_token),
     url(r'^auth/', include('rest_framework_social_oauth2.urls')),
     url(r'^swagger/$', schema_view),
-    url(r'^admin/', admin.site.urls),
+    url(r'^tbs-admin/', admin.site.urls),
     url(r'^actions/', include('actions.urls')),
     url(r'^servers/(?P<server_pk>[^/.]+)$', servers_views.server_internal_details, name="server_internal"),
+    url(r'^(?P<namespace>[\w-]+)/triggers/send-slack-message/$', trigger_views.SlackMessageView.as_view(),
+        name='send-slack-message'),
     url(r'^(?P<namespace>[\w-]+)/', include(router.urls)),
     url(r'^(?P<namespace>[\w-]+)/', include(project_router.urls)),
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/synced-resources/$',
@@ -70,13 +74,13 @@ urlpatterns = [
     url(r'^(?P<namespace>[\w-]+)/users/(?P<user_pk>[\w-]+)/api-key/$', user_views.api_key, name='api_key'),
     url(r'^(?P<namespace>[\w-]+)/users/(?P<user_pk>[\w-]+)/api-key/reset/$', user_views.reset_api_key,
         name='reset_api_key'),
-    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/is-allowed/',
+    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/is-allowed/',
         servers_views.IsAllowed.as_view(), name='is_allowed'),
-    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/start/',
+    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/start/',
         servers_views.start, name='server-start'),
-    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/stop/',
+    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/stop/',
         servers_views.stop, name='server-stop'),
-    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/terminate/',
+    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/terminate/',
         servers_views.terminate, name='server-terminate'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

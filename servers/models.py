@@ -52,8 +52,11 @@ class Server(models.Model):
         return self.name
 
     def get_absolute_url(self, namespace):
+        return self.get_action_url(namespace, 'detail')
+
+    def get_action_url(self, namespace, action):
         return reverse(
-            'server-detail',
+            'server-{}'.format(action),
             kwargs={'namespace': namespace.name, 'project_pk': str(self.project.pk), 'pk': str(self.pk)}
         )
 

@@ -9,4 +9,3 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         if not EnvironmentResource.objects.exists():
             EnvironmentResource.objects.create(name='Nano', cpu=1, memory=512, active=True)
-

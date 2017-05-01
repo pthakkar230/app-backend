@@ -64,3 +64,11 @@ class UJSONSerializer(BaseSerializer):
 
     def loads(self, value):
         return ujson.loads(force_text(value))
+
+
+def copy_model(model):
+    if model is None:
+        return
+    new_object = model.__class__.objects.get(pk=model.pk)
+    new_object.pk = None
+    return new_object

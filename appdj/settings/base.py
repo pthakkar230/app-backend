@@ -56,18 +56,18 @@ INSTALLED_APPS = [
     'projects',
     'servers',
     'actions',
+    'triggers',
 ]
 
 MIDDLEWARE = [
-    'actions.middleware.ActionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'actions.middleware.ActionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'base.middleware.NamespaceMiddleware',
 ]
 
@@ -101,6 +101,7 @@ DATABASES = {
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.google.GoogleOAuth2',
     'social_core.backends.github.GithubOAuth2',
+    'social_core.backends.slack.SlackOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
@@ -173,6 +174,9 @@ STATIC_URL = "https://{}/".format(AWS_S3_CUSTOM_DOMAIN)
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "staticfiles"),
+]
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
@@ -287,3 +291,8 @@ SERVER_ENDPOINT_URLS = {'jupyter': '/jupyter/tree', 'restful': '/restfull/'}
 SERVER_COMMANDS = {
     "jupyter": "jupyter notebook --no-browser --NotebookApp.token=''",
 }
+
+# slack
+
+SOCIAL_AUTH_SLACK_KEY = os.environ.get('SLACK_KEY')
+SOCIAL_AUTH_SLACK_SECRET = os.environ.get('SLACK_SECRET')

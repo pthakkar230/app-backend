@@ -32,6 +32,7 @@ class ActionMiddlewareFunctionalTest(TestCase):
 
     def test_get_success_request(self):
         request = self.factory.get('/actions/')
+        request.user = self.user
         response = self.middleware(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         action = Action.objects.get()
@@ -81,7 +82,7 @@ class ActionMiddlewareFunctionalTest(TestCase):
         url = reverse('server-start', kwargs={
             'namespace': self.user.username,
             'project_pk': str(server.project.pk),
-            'server_pk': str(server.pk)
+            'pk': str(server.pk)
         })
         request = self.factory.post(url)
         response = self.middleware(request)
@@ -141,11 +142,6 @@ class ActionMiddlewareTest(TestCase):
         self.middleware._set_action_object(action, request, response)
         self.assertEqual(str(action.object_id), response.data['id'])
 
-    def test_set_action_user(self):
-        action = Action()
-        ActionMiddleware._set_action_user(action, self.user)
-        self.assertEqual(action.user.pk, self.user.pk)
-
     def test_get_object_from_post_data(self):
         url = reverse('project-list', kwargs={'namespace': self.user.username})
         project = {'name': 'test'}
@@ -188,7 +184,7 @@ class ActionMiddlewareTest(TestCase):
         request = self.factory.get(url)
         self.get_response(request)
         name = ActionMiddleware._get_action_name(request)
-        self.assertEqual(name, 'Action Detail')
+        self.assertEqual(name, 'Action')
 
     def test_get_action_name_no_match(self):
         action = ActionFactory()
