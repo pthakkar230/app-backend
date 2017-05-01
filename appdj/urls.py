@@ -26,12 +26,14 @@ from base.swagger.views import get_swagger_view
 from projects import views as project_views
 from servers import views as servers_views
 from users import views as user_views
+from infrastructure import views as infra_views
 from triggers import views as trigger_views
 
 router = routers.DefaultRouter()
 
 router.register(r'servers/options/resources', servers_views.EnvironmentResourceViewSet)
 router.register(r'users', user_views.UserViewSet)
+router.register(r'hosts', infra_views.DockerHostViewSet)
 router.register(r'triggers', trigger_views.TriggerViewSet)
 user_router = routers.NestedSimpleRouter(router, r'users', lookup='user')
 user_router.register(r'emails', user_views.EmailViewSet)

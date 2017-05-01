@@ -18,7 +18,7 @@ class ServerSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Server
         fields = ('id', 'name', 'created_at', 'image_name', 'environment_resources', 'startup_script', 'config',
-                  'status', 'connected', 'endpoint')
+                  'status', 'connected', 'host', 'endpoint')
         read_only_fields = ('created_at',)
         extra_kwargs = {
             'connected': {'allow_empty': True, 'required': False},

@@ -48,7 +48,7 @@ class ServerSpawner(object):
 class DockerSpawner(ServerSpawner):
     def __init__(self, server, client=None):
         super().__init__(server)
-        self.client = client or from_env()
+        self.client = client or (server.host.client if server.host else from_env())
         self.container_port = self.server.config.get('port') or settings.SERVER_PORT
         self.container_id = ''
         self.cmd = None
