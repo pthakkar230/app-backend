@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'storages',
     'django_extensions',
     'cacheops',
+    'corsheaders',
 
     'base',
     'users',
@@ -63,6 +64,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -297,3 +299,6 @@ SERVER_COMMANDS = {
 
 SOCIAL_AUTH_SLACK_KEY = os.environ.get('SLACK_KEY')
 SOCIAL_AUTH_SLACK_SECRET = os.environ.get('SLACK_SECRET')
+
+# CORS requests
+CORS_ORIGIN_ALLOW_ALL = True
