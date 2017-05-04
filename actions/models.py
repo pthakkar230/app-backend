@@ -28,11 +28,11 @@ class Action(models.Model):
         (CREATED, "Created"),
     )
 
-    path = models.CharField(max_length=255)
+    path = models.CharField(max_length=255, blank=True)
     payload = JSONField(default={})
     action = models.CharField(max_length=100, db_index=True)
     method = models.CharField(max_length=7)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='actions', null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='actions', null=True, blank=True)
     user_agent = models.CharField(max_length=255)
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(blank=True, null=True)

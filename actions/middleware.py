@@ -1,10 +1,10 @@
 import ujson
 
-from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import get_view_name
+from rest_framework.authtoken.models import Token
 
 from .models import Action
 
@@ -21,22 +21,35 @@ class ActionMiddleware(object):
         except ValueError:
             body = {}
         user = None
-        if hasattr(request, 'user') and not isinstance(request.user, AnonymousUser):
-            user = request.user
-        action, created = Action.objects.get_or_create(
+        token_header = request.META.get('HTTP_AUTHORIZATION')
+        if token_header and token_header.startswith('Token '):
+            token = token_header.split(' ')[1]
+            try:
+                token_obj = Token.objects.get(key=token)
+            except Token.DoesNotExist:
+                pass
+            else:
+                user = token_obj.user
+        filter_kwargs = dict(
             path=path,
             user=user,
             state=Action.CREATED,
-            defaults=dict(
-                action=self._get_action_name(request),
-                method=request.method.lower(),
-                user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                start_date=start,
-                payload=body,
-                ip=self._get_client_ip(request),
-                state=Action.PENDING,
-            )
         )
+        try:
+            action, created = Action.objects.get_or_create(
+                defaults=dict(
+                    action=self._get_action_name(request),
+                    method=request.method.lower(),
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    start_date=start,
+                    payload=body,
+                    ip=self._get_client_ip(request),
+                    state=Action.PENDING,
+                ),
+                **filter_kwargs
+            )
+        except Action.MultipleObjectsReturned:
+            action = Action.objects.filter(**filter_kwargs).first()
         request.action = action
 
         response = self.get_response(request)  # type: HttpResponse

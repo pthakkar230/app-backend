@@ -70,10 +70,11 @@ class TriggerTest(APILiveServerTestCase):
 
     def test_trigger_with_payload(self):
         cause = ActionFactory(state=Action.CREATED)
+        url = reverse('project-list', kwargs={'namespace': self.user.username})
         effect = ActionFactory(
             state=Action.CREATED,
             method='post',
-            path='/{}/projects/'.format(self.user.username),
+            path=url,
             payload=dict(name='DispatchTest'),
             user=self.user,
         )
