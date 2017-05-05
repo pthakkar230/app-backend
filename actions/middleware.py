@@ -35,22 +35,17 @@ class ActionMiddleware(object):
             user=user,
             state=Action.CREATED,
         )
-        try:
-            action, created = Action.objects.get_or_create(
-                defaults=dict(
-                    action=self._get_action_name(request),
-                    method=request.method.lower(),
-                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                    start_date=start,
-                    payload=body,
-                    ip=self._get_client_ip(request),
-                    state=Action.PENDING,
-                ),
-                **filter_kwargs
-            )
-        except Action.MultipleObjectsReturned:
-            action = Action.objects.filter(**filter_kwargs).first()
-        request.action = action
+        defaults = dict(
+            action=self._get_action_name(request),
+            method=request.method.lower(),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            start_date=start,
+            payload=body,
+            ip=self._get_client_ip(request),
+            state=Action.PENDING,
+        )
+        action = Action.objects.get_or_create_action(filter_kwargs, defaults)
+        request.action = action 
 
         response = self.get_response(request)  # type: HttpResponse
 

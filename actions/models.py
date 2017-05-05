@@ -9,6 +9,19 @@ from requests import Session, Request
 from base.namespace import Namespace
 
 
+class ActionQuerySet(models.QuerySet):
+    def get_or_create_action(self, filter_kwargs, defaults):
+        try:
+            action, created = self.get_or_create(
+                **filter_kwargs,
+                defaults=defaults
+            )
+        except Action.MultipleObjectsReturned:
+            action = Action.objects.filter(**filter_kwargs).first()
+        return action
+
+
+
 class Action(models.Model):
     PENDING = 0
     IN_PROGRESS = 1
@@ -44,6 +57,8 @@ class Action(models.Model):
     can_be_cancelled = models.BooleanField(default=False)
     can_be_retried = models.BooleanField(default=False)
     is_user_action = models.BooleanField(default=True)
+
+    objects = ActionQuerySet.as_manager()
 
     class Meta:
         ordering = ('-start_date',)
