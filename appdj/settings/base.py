@@ -14,9 +14,9 @@ import os
 import dj_database_url
 import uuid
 from django.urls import reverse_lazy
-
+from appdj.settings import BASE_DIR
+from appdj.settings.tbslog import TBS_LOGGING
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
@@ -302,3 +302,5 @@ SOCIAL_AUTH_SLACK_SECRET = os.environ.get('SLACK_SECRET')
 
 # CORS requests
 CORS_ORIGIN_ALLOW_ALL = True
+
+LOGGING = TBS_LOGGING
