@@ -45,7 +45,9 @@ services:
     volumes_from:
       - api
   logspout:
-    image: gliderlabs/logspout
+    image: 3blades/logspout:latest
+    ports:
+      - "8080:80"
     env_file: env
   notifications-server:
     image: 3blades/notifications-server:latest
