@@ -20,7 +20,7 @@ class ProjectTest(APITestCase):
     def test_create_project(self):
         url = reverse('project-list', kwargs={'namespace': self.user.username})
         data = dict(
-            name='Test 1',
+            name='Test1',
             description='Test description',
         )
         response = self.client.post(url, data)
@@ -50,7 +50,7 @@ class ProjectTest(APITestCase):
         project = collaborator.project
         url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         data = dict(
-            name='Test 1',
+            name='Test-1',
             description='Test description',
         )
         response = self.client.put(url, data)
@@ -63,7 +63,7 @@ class ProjectTest(APITestCase):
         project = collaborator.project
         url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         data = dict(
-            name='Test 1',
+            name='Test-1',
         )
         response = self.client.patch(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
