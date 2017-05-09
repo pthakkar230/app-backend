@@ -21,7 +21,6 @@ class ActionQuerySet(models.QuerySet):
         return action
 
 
-
 class Action(models.Model):
     PENDING = 0
     IN_PROGRESS = 1
