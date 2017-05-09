@@ -7,6 +7,7 @@ from django.urls import reverse
 from social_django.models import UserSocialAuth
 
 from base.namespace import Namespace
+from utils import alphanumeric
 
 
 class ProjectQuerySet(models.QuerySet):
@@ -15,7 +16,7 @@ class ProjectQuerySet(models.QuerySet):
 
 
 class Project(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, validators=[alphanumeric])
     description = models.CharField(max_length=400, blank=True)
     private = models.BooleanField(default=True)
     last_updated = models.DateTimeField(auto_now=True)

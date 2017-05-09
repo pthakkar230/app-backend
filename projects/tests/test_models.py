@@ -10,7 +10,7 @@ from .factories import CollaboratorFactory
 class ProjectTestCase(TestCase):
     def setUp(self):
         self.project = Project.objects.create(
-            name='test project',
+            name='test-project',
             description='test project description',
         )
         collaborator = CollaboratorFactory(project=self.project)

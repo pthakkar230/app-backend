@@ -55,6 +55,7 @@ class ActionTest(APITestCase):
         url = reverse('action-create')
         action_content_object = ProjectFactory()
         data = dict(
+            action_name='detail',
             action="Project delete",
             user_agent="Test client",
             object_id=str(action_content_object.pk),
