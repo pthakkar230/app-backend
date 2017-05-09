@@ -45,7 +45,7 @@ class ActionMiddleware(object):
             state=Action.PENDING,
         )
         action = Action.objects.get_or_create_action(filter_kwargs, defaults)
-        request.action = action 
+        request.action = action
 
         response = self.get_response(request)  # type: HttpResponse
 

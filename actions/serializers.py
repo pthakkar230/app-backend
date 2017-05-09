@@ -27,7 +27,7 @@ class ActionSerializer(serializers.ModelSerializer):
         state = validated_data.pop('get_state_display', 0)
         content_type = validated_data.pop('content_type', None)
         user = self.context['request'].user
-        path = validated_data.pop('path', '') 
+        path = validated_data.pop('path', '')
         if content_type and 'object_id' in validated_data:
             content_type_obj = ContentType.objects.filter(**content_type).first()
             if not path:
