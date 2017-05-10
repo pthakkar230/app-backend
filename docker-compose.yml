@@ -38,17 +38,13 @@ services:
   server:
     image: 3blades/openresty:latest
     command: -p '' -c nginx.conf -g 'daemon off;'
+    env_file: env
     ports:
       - "5000:80"
     depends_on:
       - api
     volumes_from:
       - api
-  logspout:
-    image: 3blades/logspout:latest
-    ports:
-      - "8080:80"
-    env_file: env
   notifications-server:
     image: 3blades/notifications-server:latest
     ports:

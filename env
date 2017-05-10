@@ -6,6 +6,7 @@ C_ROOT=1
 DATABASE_URL=postgres://postgres:@db:5432/postgres
 REDIS_URL=redis://cache:6379/0
 DJANGO_SETTINGS_MODULE=appdj.settings.prod
+DOCKER_DOMAIN=172.17.0.1:2375
 DOCKER_HOST=tcp://172.17.0.1:2375
 RABBITMQ_URL=amqp://broker
 TBS_HOST=

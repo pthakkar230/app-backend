@@ -54,8 +54,7 @@ class ServerSerializer(serializers.ModelSerializer):
 
     def get_logs_url(self, obj):
         request = self.context['request']
-        return '{scheme}://{host}/server/logs/{id}'.format(
-            scheme=request.scheme,
+        return 'ws://{host}/server/logs/{id}'.format(
             host=get_current_site(request).domain,
             id=obj.id,
         )
