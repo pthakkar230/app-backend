@@ -91,9 +91,6 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         }
         self.assertDictEqual(expected, self.spawner._get_host_config())
 
-    def test_status(self):
-        self.assertEqual(Server.RUNNING, self.spawner.status())
-
     def test_create_container(self):
         self.spawner._create_container()
         self.assertTrue(bool(self.server.container_id))
@@ -153,9 +150,10 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         self.user.profile.save()
         self.assertEqual(self.spawner._get_user_timezone(), 'EDT')
 
-    def test_connected_links(self):
+    @patch('servers.spawners.DockerSpawner.status')
+    def test_connected_links(self, status):
+        status.return_value = Server.RUNNING
         conn = ServerFactory()
-        conn.status = Server.RUNNING
         self.server.connected.add(conn)
         self.server.save()
         links = self.spawner._connected_links()

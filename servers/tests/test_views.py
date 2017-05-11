@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -92,9 +93,10 @@ class ServerTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertIsNone(Server.objects.filter(pk=server.pk).first())
 
-    def test_server_internal_running(self):
+    @patch('servers.spawners.DockerSpawner.status')
+    def test_server_internal_running(self, server_status):
+        server_status.return_value = Server.RUNNING
         server = ServerFactory(project=self.project)
-        server.status = server.RUNNING
         url = reverse('server_internal', kwargs={'server_pk': server.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
