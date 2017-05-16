@@ -35,18 +35,6 @@ class TestServer(TestCase):
         expected = 'server_state_00000000-0000-0000-0000-000000000000'
         self.assertEqual(server.state_cache_key, expected)
 
-    def test_status(self):
-        server = Server(id=self.pk)
-        self.cache.hset('server_state_00000000-0000-0000-0000-000000000000', "status", Server.RUNNING)
-        self.assertEqual(server.status, Server.RUNNING)
-
-    def test_status_setter(self):
-        server = Server(id=self.pk)
-        self.cache.hset('server_state_00000000-0000-0000-0000-000000000000', "status", Server.STOPPED)
-        server.status = server.RUNNING
-        self.assertEqual(self.cache.hget('server_state_00000000-0000-0000-0000-000000000000', "status").decode(),
-                         Server.RUNNING)
-
     def test_needs_update(self):
         server = Server(id=self.pk)
         self.cache.hset('server_state_00000000-0000-0000-0000-000000000000', 'update', 'test')

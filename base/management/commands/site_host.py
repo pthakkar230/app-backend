@@ -8,7 +8,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         site = Site.objects.get(pk=settings.SITE_ID)
         host = os.environ.get('TBS_HOST')
-        if host:
+        if host and site.domain == 'example.com':
             site.domain = host
             site.name = host
             site.save()

@@ -75,19 +75,9 @@ class Server(models.Model):
 
     @property
     def status(self):
-        cache = get_redis_connection("default")
-        status = cache.hget(self.state_cache_key, "status")
-        if status is None:
-            spawner = DockerSpawner(self)
-            status = spawner.status()
-            cache.hset(self.state_cache_key, "status", status)
+        spawner = DockerSpawner(self)
+        status = spawner.status()
         return status.decode() if isinstance(status, bytes) else status
-
-    @status.setter
-    def status(self, value):
-        if self.status != value:
-            cache = get_redis_connection("default")
-            cache.hset(self.state_cache_key, "status", value)
 
     def needs_update(self):
         cache = get_redis_connection("default")

@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -92,9 +93,10 @@ class ServerTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertIsNone(Server.objects.filter(pk=server.pk).first())
 
-    def test_server_internal_running(self):
+    @patch('servers.spawners.DockerSpawner.status')
+    def test_server_internal_running(self, server_status):
+        server_status.return_value = Server.RUNNING
         server = ServerFactory(project=self.project)
-        server.status = server.RUNNING
         url = reverse('server_internal', kwargs={'server_pk': server.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -107,13 +109,25 @@ class ServerTest(APITestCase):
         }
         self.assertDictEqual(expected, response.data)
 
-    def test_server_internal_not_running(self):
-        server = ServerFactory(project=self.project)
-        url = reverse('server_internal', kwargs={'server_pk': server.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        expected = {'server': '', 'container_name': ''}
-        self.assertDictEqual(expected, response.data)
+    @patch('servers.spawners.DockerSpawner.status')
+    def test_server_internal_not_running(self, server_status):
+        statuses = [
+            Server.STOPPED,
+            Server.STOPPING,
+            Server.PENDING,
+            Server.LAUNCHING,
+            Server.ERROR,
+            Server.TERMINATING,
+            Server.TERMINATED
+        ]
+        for state in statuses:
+            server_status.return_value = state
+            server = ServerFactory(project=self.project)
+            url = reverse('server_internal', kwargs={'server_pk': server.pk})
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            expected = {'server': '', 'container_name': ''}
+            self.assertDictEqual(expected, response.data)
 
 
 class ServerRunStatisticsTestCase(APITestCase):
