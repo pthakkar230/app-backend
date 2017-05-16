@@ -4,6 +4,7 @@ from rest_framework import serializers
 from social_django.models import UserSocialAuth
 
 from actions.models import Action
+from servers.models import Server
 from .models import Trigger
 from .slack import send_message
 
@@ -103,3 +104,70 @@ class SlackMessageSerializer(serializers.Serializer):
             text=self.validated_data['text'],
             channel=self.validated_data['channel'] or '#general'
         )
+
+
+class ServerActionSerializer(serializers.ModelSerializer):
+    START = 'start'
+    STOP = 'stop'
+    REDEPLOY = 'redeploy'
+    TERMINATE = 'terminate'
+    SCALEUP = 'scaleup'
+
+    OPERATIONS = (
+        (START, "Start"),
+        (STOP, "Stop"),
+        (REDEPLOY, "Redeploy"),
+        (TERMINATE, "Terminate"),
+        (SCALEUP, "Scale up"),
+    )
+
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    operation = serializers.ChoiceField(choices=OPERATIONS, default=REDEPLOY)
+
+    class Meta:
+        model = Trigger
+        fields = ('id', 'name', 'user', 'operation')
+
+    def create(self, validated_data):
+        content_type = ContentType.objects.filter(model='server').first()
+        server = Server.objects.get(pk=self.context['view'].kwargs['server_pk'])
+        namespace = self.context['request'].namespace
+        action = Action.objects.create(
+            method='POST',
+            action='Server {}'.format(validated_data['operation']),
+            state=Action.CREATED,
+            content_type=content_type,
+            content_object=server,
+            is_user_action=False,
+            user=validated_data['user'],
+            path=server.get_action_url(namespace, validated_data['operation']),
+        )
+        trigger = Trigger(
+            name=validated_data.get('name', ''),
+            effect=action,
+            user=validated_data['user'],
+        )
+        trigger.save()
+        return trigger
+
+    def get_operation(self, obj):
+        action_name = obj.effect.action
+        for op, op_name in self.OPERATIONS:
+            if op in action_name:
+                return op
+
+    def to_representation(self, obj):
+        namespace = self.context['request'].namespace
+        return {
+            'id': str(obj.pk),
+            'name': obj.name,
+            'operation': self.get_operation(obj),
+            'url': reverse(
+                'server-trigger-call',
+                kwargs={
+                    'namespace': namespace.name,
+                    'server_pk': str(obj.effect.object_id),
+                    'pk': str(obj.pk),
+                }
+            )
+        }
