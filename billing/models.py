@@ -114,7 +114,7 @@ class Plan(StripeModel):
     interval_count = models.PositiveIntegerField()
     name = models.CharField(max_length=255)
     statement_descriptor = models.TextField(null=True)
-    trial_period_days = models.PositiveIntegerField()
+    trial_period_days = models.PositiveIntegerField(null=True)
 
 
 class Subscription(StripeModel):

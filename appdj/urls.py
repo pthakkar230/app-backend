@@ -28,6 +28,7 @@ from servers import views as servers_views
 from users import views as user_views
 from infrastructure import views as infra_views
 from triggers import views as trigger_views
+from billing import views as billing_views
 
 router = routers.DefaultRouter()
 
@@ -35,6 +36,7 @@ router.register(r'servers/options/resources', servers_views.EnvironmentResourceV
 router.register(r'users', user_views.UserViewSet)
 router.register(r'hosts', infra_views.DockerHostViewSet)
 router.register(r'triggers', trigger_views.TriggerViewSet)
+router.register(r'billing', billing_views.PlanViewSet)
 user_router = routers.NestedSimpleRouter(router, r'users', lookup='user')
 user_router.register(r'emails', user_views.EmailViewSet)
 user_router.register(r'integrations', user_views.IntegrationViewSet)
