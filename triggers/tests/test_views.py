@@ -90,5 +90,4 @@ class ServerActionTestCase(APILiveServerTestCase):
         )
         headers = {'Content-Type': 'application/json'}
         resp = requests.post(call_url, headers=headers)
-        print(resp.json())
         self.assertEqual(resp.status_code, 200)
