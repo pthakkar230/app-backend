@@ -21,13 +21,18 @@ def real_convert_field_to_stripe(model, stripe_field, stripe_data):
     # Not sure we will have to
     if (model_field is not None and
         (model_field.is_relation and not model_field.many_to_many)):
-        value = model_field.related_model.objects.get(stripe_id=stripe_data.get(stripe_field))
+
+        if value is not None:
+            if isinstance(value, dict):
+                stripe_id = value.get("id")
+            else:
+                stripe_id = stripe_data.get(stripe_field)
+            value = model_field.related_model.objects.get(stripe_id=stripe_id)
 
     elif isinstance(model_field, models.DateTimeField):
-        value = datetime.fromtimestamp(stripe_data.get(stripe_field))
-        value = timezone.make_aware(value)
-
-    log.debug((field_name, value))
+        if value is not None:
+            value = datetime.fromtimestamp(value)
+            value = timezone.make_aware(value)
 
     return (field_name, value)
 

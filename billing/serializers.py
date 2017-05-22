@@ -3,7 +3,7 @@ import stripe
 from django.conf import settings
 from rest_framework import serializers
 
-from billing.models import (Customer, Card, Plan)
+from billing.models import (Customer, Card, Plan, Subscription)
 from billing.stripe_utils import convert_stripe_object
 log = logging.getLogger('billing')
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -129,3 +129,18 @@ class CustomerSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ("customer", "plan")
+        read_only_fields = ('stripe_id', 'created')
+
+    def create(self, validated_data):
+        customer = validated_data.get("customer")
+        plan = validated_data.get("plan")
+
+        stripe_response = stripe.Subscription.create(customer=customer.stripe_id,
+                                                     plan=plan.stripe_id)
+        converted_data = convert_stripe_object(Subscription, stripe_response)
+        return Subscription.objects.create(**converted_data)

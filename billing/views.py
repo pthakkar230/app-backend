@@ -3,8 +3,9 @@ import stripe
 from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
 
-from billing.models import Plan, Customer, Card
-from billing.serializers import PlanSerializer, CustomerSerializer, CardSerializer
+from billing.models import Plan, Customer, Card, Subscription
+from billing.serializers import (PlanSerializer, CustomerSerializer, CardSerializer,
+                                 SubscriptionSerializer)
 log = logging.getLogger('billing')
 
 
@@ -53,6 +54,21 @@ class PlanViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = Plan.objects.get(pk=kwargs.get('pk'))
         stripe_obj = stripe.Plan.retrieve(instance.stripe_id)
+
+        stripe_response = stripe_obj.delete()
+        instance.delete()
+
+        data = {'stripe_id': stripe_response['id'], 'deleted': True}
+        return Response(data=data, status=status.HTTP_204_NO_CONTENT)
+
+
+class SubscriptionViewSet(viewsets.ModelViewSet):
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        instance = Subscription.objects.get(pk=kwargs.get('pk'))
+        stripe_obj = stripe.Subscription.retrieve(instance.stripe_id)
 
         stripe_response = stripe_obj.delete()
         instance.delete()
