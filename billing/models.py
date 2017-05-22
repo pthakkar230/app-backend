@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.conf import settings
@@ -9,6 +10,15 @@ class BillingAddress(models.Model):
     state_province = models.CharField(max_length=100)
     zip_code = models.CharField(max_length=11)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+# Note: While this model is not used anymore, we shouldn't delete it (for now at least)
+# Because deleting it causes migration problems, especially when running the test suite
+class BillingPlan(models.Model):
+    name = models.CharField(max_length=50, blank=True, null=True)
+    description = models.CharField(max_length=400, blank=True)
+    settings = JSONField(default={})
+    cost = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(0.0))
 
 
 class StripeModel(models.Model):
@@ -30,17 +40,18 @@ class Event(StripeModel):
 
 
 class Customer(StripeModel):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL)
-    account_balance = models.IntegerField()
-    currency = models.CharField(max_length=10)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL)
+    account_balance = models.IntegerField(default=0)
+    currency = models.CharField(max_length=10, null=True)
     default_source = models.TextField(null=True)
 
 
 class Card(StripeModel):
     customer = models.ForeignKey(Customer)
+    name = models.CharField(max_length=200, null=True)
     address_city = models.CharField(max_length=255)
     address_country = models.CharField(max_length=255, null=True)
-    address_line_one = models.CharField(max_length=255)
+    address_line1 = models.CharField(max_length=255)
 
     PASS = "pass"
     FAIL = "fail"
@@ -52,12 +63,11 @@ class Card(StripeModel):
                                    (UNAVAILABLE, "Unavailable"),
                                    (UNCHECKED, "Unchecked"))
 
-    address_line_one_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES)
-    address_line_two = models.CharField(max_length=255)
+    address_line1_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES)
+    address_line2 = models.CharField(max_length=255, null=True)
     address_state = models.CharField(max_length=100)
     address_zip = models.CharField(max_length=25)
     address_zip_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES)
-    country = models.CharField(max_length=200)
 
     VISA = "Visa"
     AMEX = "American Express"
@@ -77,9 +87,9 @@ class Card(StripeModel):
     brand = models.CharField(max_length=16, choices=BRAND_CHOICES)
     cvc_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES)
     # Tokenized numbers only
-    dynamic_last_four = models.CharField(max_length=4, null=True)
+    dynamic_last4 = models.CharField(max_length=4, null=True)
     # Non-Tokenized
-    last_four = models.CharField(max_length=4)
+    last4 = models.CharField(max_length=4)
     exp_month = models.IntegerField()
     exp_year = models.IntegerField()
     fingerprint = models.TextField()
