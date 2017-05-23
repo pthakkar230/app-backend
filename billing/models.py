@@ -41,7 +41,9 @@ class Event(StripeModel):
 
 class Customer(StripeModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL)
+    # Should account_balance really be exposed?
     account_balance = models.IntegerField(default=0)
+    # TODO: Delete this field. Useless
     currency = models.CharField(max_length=10, null=True)
     default_source = models.TextField(null=True)
 
@@ -49,9 +51,9 @@ class Customer(StripeModel):
 class Card(StripeModel):
     customer = models.ForeignKey(Customer)
     name = models.CharField(max_length=200, null=True)
-    address_city = models.CharField(max_length=255)
+    address_city = models.CharField(max_length=255, null=True)
     address_country = models.CharField(max_length=255, null=True)
-    address_line1 = models.CharField(max_length=255)
+    address_line1 = models.CharField(max_length=255, null=True)
 
     PASS = "pass"
     FAIL = "fail"
@@ -63,11 +65,11 @@ class Card(StripeModel):
                                    (UNAVAILABLE, "Unavailable"),
                                    (UNCHECKED, "Unchecked"))
 
-    address_line1_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES)
+    address_line1_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES, null=True)
     address_line2 = models.CharField(max_length=255, null=True)
-    address_state = models.CharField(max_length=100)
-    address_zip = models.CharField(max_length=25)
-    address_zip_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES)
+    address_state = models.CharField(max_length=100, null=True)
+    address_zip = models.CharField(max_length=25, null=True)
+    address_zip_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES, null=True)
 
     VISA = "Visa"
     AMEX = "American Express"
@@ -85,7 +87,7 @@ class Card(StripeModel):
                      (DINER, DINER),
                      (UNKNOWN, UNKNOWN))
     brand = models.CharField(max_length=16, choices=BRAND_CHOICES)
-    cvc_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES)
+    cvc_check = models.CharField(max_length=12, choices=VERIFICATION_STATUS_CHOICES, null=True)
     # Tokenized numbers only
     dynamic_last4 = models.CharField(max_length=4, null=True)
     # Non-Tokenized

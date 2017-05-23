@@ -4,7 +4,7 @@ from django.conf import settings
 from rest_framework import serializers
 
 from billing.models import (Customer, Card, Plan, Subscription)
-from billing.stripe_utils import convert_stripe_object
+from billing.stripe_utils import convert_stripe_object, create_stripe_customer_from_user
 log = logging.getLogger('billing')
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -43,19 +43,24 @@ class PlanSerializer(serializers.ModelSerializer):
 
 
 class CardSerializer(serializers.Serializer):
+    # TODO: Create some sort of validator that validates that if token is not present, the rest of these are
+    # Note: Tokens are heavily preferred, but CLI Tools require manually passing all arguments.
+    # Hence this mess.
     # Should probably be a PrimaryKey field but have had trouble w/ config
-    user = serializers.UUIDField(write_only=True)
-    name = serializers.CharField(max_length=200)
-    address_line1 = serializers.CharField(max_length=255)
+    user = serializers.UUIDField(write_only=True, required=False)
+    name = serializers.CharField(max_length=200, required=False)
+    address_line1 = serializers.CharField(max_length=255, required=False)
     address_line2 = serializers.CharField(max_length=255, required=False)
-    address_city = serializers.CharField(max_length=255)
-    address_state = serializers.CharField(max_length=100)
-    address_zip = serializers.CharField(max_length=15)
-    address_country = serializers.CharField(max_length=255)
-    number = serializers.CharField(max_length=100, write_only=True)
-    exp_month = serializers.IntegerField(min_value=1, max_value=12)
-    exp_year = serializers.IntegerField()
-    cvc = serializers.IntegerField(write_only=True)
+    address_city = serializers.CharField(max_length=255, required=False)
+    address_state = serializers.CharField(max_length=100, required=False)
+    address_zip = serializers.CharField(max_length=15, required=False)
+    address_country = serializers.CharField(max_length=255, required=False)
+    number = serializers.CharField(max_length=100, write_only=True, required=False)
+    exp_month = serializers.IntegerField(min_value=1, max_value=12, required=False)
+    exp_year = serializers.IntegerField(required=False)
+    cvc = serializers.IntegerField(write_only=True, required=False)
+
+    token = serializers.CharField(max_length=255, required=False)
 
     # Begin read-only fields
     customer = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -70,12 +75,18 @@ class CardSerializer(serializers.Serializer):
     created = serializers.DateTimeField(read_only=True)
 
     def create(self, validated_data):
-        customer = Customer.objects.get(user__id=validated_data.pop("user"))
+        user_pk = validated_data.pop("user")
+        customer = Customer.objects.get(user__pk=user_pk)
         stripe_cust = stripe.Customer.retrieve(customer.stripe_id)
 
-        validated_data['object'] = "card"
-        stripe_resp = stripe_cust.sources.create(source=validated_data)
-        stripe_resp['customer'] = customer
+        token = validated_data.get("token")
+        if token is None:
+            validated_data['object'] = "card"
+            stripe_resp = stripe_cust.sources.create(source=validated_data)
+        else:
+            stripe_resp = stripe_cust.sources.create(source=token)
+
+        stripe_resp['customer'] = customer.stripe_id
 
         converted_data = convert_stripe_object(Card, stripe_resp)
         return Card.objects.create(**converted_data)
@@ -102,23 +113,20 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = "__all__"
-        read_only_fields = ('stripe_id', 'created')
+        read_only_fields = ('stripe_id', 'created', 'livemode')
 
     def create(self, validated_data):
         auth_user = validated_data.get('user')
-        stripe_response = stripe.Customer.create(description=auth_user.first_name + " " + auth_user.last_name,
-                                                 email=auth_user.email)
-        # Meh.
-        stripe_response['user'] = auth_user
-        converted_data = convert_stripe_object(Customer, stripe_response)
-        return Customer.objects.create(**converted_data)
+        customer = create_stripe_customer_from_user(auth_user)
+        return customer
 
     def update(self, instance, validated_data):
         # TODO: Prevent changing the Customer.user
         stripe_obj = stripe.Customer.retrieve(instance.stripe_id)
 
         for key in validated_data:
-            setattr(stripe_obj, key, validated_data[key])
+            if key.lower() != "user":
+                setattr(stripe_obj, key, validated_data[key])
 
         stripe_response = stripe_obj.save()
         converted_data = convert_stripe_object(Customer, stripe_response)

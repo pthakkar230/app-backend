@@ -3,6 +3,7 @@ import stripe
 from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
 
+from base.views import NamespaceMixin
 from billing.models import Plan, Customer, Card, Subscription
 from billing.serializers import (PlanSerializer, CustomerSerializer, CardSerializer,
                                  SubscriptionSerializer)
@@ -30,6 +31,7 @@ class CardViewSet(mixins.CreateModelMixin,
                   mixins.RetrieveModelMixin,
                   mixins.UpdateModelMixin,
                   mixins.DestroyModelMixin,
+                  NamespaceMixin,
                   viewsets.GenericViewSet):
     queryset = Card.objects.all()
     serializer_class = CardSerializer
@@ -62,7 +64,8 @@ class PlanViewSet(viewsets.ModelViewSet):
         return Response(data=data, status=status.HTTP_204_NO_CONTENT)
 
 
-class SubscriptionViewSet(viewsets.ModelViewSet):
+class SubscriptionViewSet(NamespaceMixin,
+                          viewsets.ModelViewSet):
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
 

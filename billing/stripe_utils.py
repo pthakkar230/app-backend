@@ -1,7 +1,13 @@
 import logging
+import stripe
 from datetime import datetime
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
+
+from billing.models import Customer
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 log = logging.getLogger('billing')
 
 
@@ -18,16 +24,23 @@ def real_convert_field_to_stripe(model, stripe_field, stripe_data):
         model_field = field_name = value = None
 
     # Not sure how to handle many to many fields just yet.
-    # Not sure we will have to
+    # Not sure we will have to.
+    # I've really come to hate this following block.
+    # Will have to think about how to clean it up.
     if (model_field is not None and
         (model_field.is_relation and not model_field.many_to_many)):
 
         if value is not None:
             if isinstance(value, dict):
-                stripe_id = value.get("id")
+                identifier = value.get("id")
             else:
-                stripe_id = stripe_data.get(stripe_field)
-            value = model_field.related_model.objects.get(stripe_id=stripe_id)
+                identifier = stripe_data.get(stripe_field)
+
+            if hasattr(model_field.related_model, "stripe_id"):
+                kwargs = {'stripe_id': identifier}
+            else:
+                kwargs = {'pk': identifier}
+            value = model_field.related_model.objects.get(**kwargs)
 
     elif isinstance(model_field, models.DateTimeField):
         if value is not None:
@@ -44,3 +57,14 @@ def convert_stripe_object(model, stripe_obj):
     if "created" not in converted:
         converted['created'] = datetime.now()
     return converted
+
+
+def create_stripe_customer_from_user(auth_user):
+    stripe_response = stripe.Customer.create(description=auth_user.first_name + " " + auth_user.last_name,
+                                             email=auth_user.email)
+
+    # Meh.
+    stripe_response['user'] = auth_user.pk
+
+    converted_data = convert_stripe_object(Customer, stripe_response)
+    return Customer.objects.create(**converted_data)
