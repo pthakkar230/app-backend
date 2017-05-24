@@ -6,9 +6,9 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from billing.models import Customer, Card
+from billing.models import Customer, Card, Plan
 from users.tests.factories import UserFactory
-from billing.tests.factories import CustomerFactory
+from billing.tests.factories import CustomerFactory, PlanFactory
 from billing.stripe_utils import create_stripe_customer_from_user
 
 log = logging.getLogger('billing')
@@ -17,7 +17,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class CustomerTest(APITestCase):
     def setUp(self):
-        self.user = UserFactory()
+        self.user = UserFactory(is_staff=True)
         self.token_header = "Token {auth}".format(auth=self.user.auth_token.key)
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
         self.customers_to_delete = []
@@ -85,3 +85,67 @@ class CustomerTest(APITestCase):
 
         post_del_user_count = User.objects.count()
         self.assertEqual(post_del_user_count, pre_del_user_count)
+
+
+class PlanTest(APITestCase):
+    def setUp(self):
+        self.user = UserFactory(is_staff=True)
+        self.token_header = "Token {auth}".format(auth=self.user.auth_token.key)
+        self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
+        self.plans_to_delete = []
+
+    def tearDown(self):
+        for plan in self.plans_to_delete:
+            stripe_obj = stripe.Plan.retrieve(plan.stripe_id)
+            stripe_obj.delete()
+
+    def _create_plan_dict(self):
+        obj_dict = vars(PlanFactory.build())
+        log.debug(("OBJ DICT", obj_dict))
+        data_dict = {key: obj_dict[key] for key in obj_dict
+                     if key in [f.name for f in Plan._meta.get_fields()] and key not in ["stripe_id", "created", "id"]}
+        log.debug(("DATA DICT", data_dict))
+        return data_dict
+
+    def test_create_plan(self):
+        url = reverse("plan-list", kwargs={'namespace': self.user.username})
+        data = self._create_plan_dict()
+        log.debug(("DATA", data))
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Plan.objects.count(), 1)
+        plan = Plan.objects.get()
+        self.plans_to_delete = [plan]
+
+
+class CardTest(APITestCase):
+    def setUp(self):
+        self.user = UserFactory(first_name="Foo",
+                                last_name="Bar")
+        self.customer = create_stripe_customer_from_user(self.user)
+        self.token_header = "Token {auth}".format(auth=self.user.auth_token.key)
+        self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
+
+    def tearDown(self):
+        stripe_obj = stripe.Customer.retrieve(self.customer.stripe_id)
+        stripe_obj.delete()
+
+    def test_create_card(self):
+        url = reverse("card-list", kwargs={'namespace': self.user.username})
+        data = {'user': str(self.user.pk),
+                'token': "tok_visa"}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Card.objects.count(), 1)
+
+    def test_list_cards(self):
+        pass
+
+    def test_card_details(self):
+        pass
+
+    def test_card_update(self):
+        pass
+
+    def test_card_delete(self):
+        pass

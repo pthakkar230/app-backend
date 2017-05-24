@@ -74,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'base.middleware.NamespaceMiddleware',
+    'billing.middleware.SubscriptionMiddleware'
 ]
 
 ROOT_URLCONF = 'appdj.urls'

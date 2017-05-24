@@ -11,7 +11,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 log = logging.getLogger('billing')
 
 
-def real_convert_field_to_stripe(model, stripe_field, stripe_data):
+def convert_field_to_stripe(model, stripe_field, stripe_data):
 
     field_name = "stripe_id" if stripe_field == "id" else stripe_field
     value = stripe_data.get(stripe_field)
@@ -51,7 +51,7 @@ def real_convert_field_to_stripe(model, stripe_field, stripe_data):
 
 
 def convert_stripe_object(model, stripe_obj):
-    dict_tuples = [real_convert_field_to_stripe(model, field, stripe_obj)
+    dict_tuples = [convert_field_to_stripe(model, field, stripe_obj)
                    for field in stripe_obj]
     converted = dict(tup for tup in dict_tuples if tup[0] is not None)
     if "created" not in converted:

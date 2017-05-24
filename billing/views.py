@@ -1,12 +1,15 @@
 import logging
 import stripe
 from rest_framework import viewsets, status, mixins
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from base.views import NamespaceMixin
-from billing.models import Plan, Customer, Card, Subscription
+from billing.models import (Plan, Customer,
+                            Card, Subscription,
+                            Invoice)
 from billing.serializers import (PlanSerializer, CustomerSerializer, CardSerializer,
-                                 SubscriptionSerializer)
+                                 SubscriptionSerializer, InvoiceSerializer)
 log = logging.getLogger('billing')
 
 
@@ -78,3 +81,13 @@ class SubscriptionViewSet(NamespaceMixin,
 
         data = {'stripe_id': stripe_response['id'], 'deleted': True}
         return Response(data=data, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["GET", "POST"])
+def no_subscription(request, *args, **kwargs):
+    return Response(status=status.HTTP_402_PAYMENT_REQUIRED)
+
+
+class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Invoice.objects.all()
+    serializer_class = InvoiceSerializer

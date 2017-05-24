@@ -47,6 +47,9 @@ class Customer(StripeModel):
     currency = models.CharField(max_length=10, null=True)
     default_source = models.TextField(null=True)
 
+    def has_active_subscription(self):
+        return self.subscription_set.filter(ended_at__isnull=True).exists()
+
 
 class Card(StripeModel):
     customer = models.ForeignKey(Customer)
