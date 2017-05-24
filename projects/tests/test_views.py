@@ -44,6 +44,7 @@ class ProjectTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(project.name, response.data['name'])
         self.assertEqual(str(project.pk), response.data['id'])
+        self.assertEqual(self.user.username, response.data['owner'])
 
     def test_project_update(self):
         collaborator = CollaboratorFactory(user=self.user)
