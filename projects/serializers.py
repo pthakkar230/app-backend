@@ -11,9 +11,11 @@ from .models import Project, File, Collaborator, SyncedResource
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    owner = serializers.CharField(source='get_owner_name', read_only=True)
+
     class Meta:
         model = Project
-        fields = ('id', 'name', 'description', 'private', 'last_updated')
+        fields = ('id', 'name', 'description', 'private', 'last_updated', 'owner')
 
     def create(self, validated_data):
         project = super().create(validated_data)
