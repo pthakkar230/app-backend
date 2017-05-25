@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 import dj_database_url
+import datetime
 import uuid
 from django.urls import reverse_lazy
 from appdj.settings import BASE_DIR
@@ -155,6 +156,10 @@ PASSWORD_HASHERS = [
 ]
 
 BCRYPT_LOG_ROUNDS = 13
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=30),
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
