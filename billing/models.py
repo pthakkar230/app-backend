@@ -46,6 +46,7 @@ class Customer(StripeModel):
     # TODO: Delete this field. Useless
     currency = models.CharField(max_length=10, null=True)
     default_source = models.TextField(null=True)
+    last_invoice_sync = models.DateTimeField(null=True)
 
     def has_active_subscription(self):
         return self.subscription_set.filter(ended_at__isnull=True).exists()
@@ -132,6 +133,13 @@ class Plan(StripeModel):
     trial_period_days = models.PositiveIntegerField(null=True)
 
 
+class SubscriptionQuerySet(models.QuerySet):
+    def namespace(self, namespace):
+        import logging
+        log = logging.getLogger('billing')
+        return self.filter(customer__user=namespace.object)
+
+
 class Subscription(StripeModel):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
@@ -159,17 +167,19 @@ class Subscription(StripeModel):
     trial_start = models.DateTimeField(null=True)
     trial_end = models.DateTimeField(null=True)
 
+    objects = SubscriptionQuerySet.as_manager()
+
 
 class Invoice(StripeModel):
     customer = models.ForeignKey(Customer)
     subscription = models.ForeignKey(Subscription, null=True, on_delete=models.CASCADE)
     amount_due = models.IntegerField()
-    application_fee = models.IntegerField()
-    attempt_count = models.PositiveIntegerField()
+    application_fee = models.IntegerField(null=True)
+    attempt_count = models.PositiveIntegerField(null=True)
     attempted = models.BooleanField(default=False)
     closed = models.BooleanField(default=False)
     currency = models.CharField(max_length=10)
-    invoice_date = models.DateField()
+    invoice_date = models.DateTimeField()
     description = models.TextField(null=True)
     next_payment_attempt = models.DateTimeField(null=True)
     paid = models.BooleanField(default=False)
@@ -179,12 +189,13 @@ class Invoice(StripeModel):
     starting_balance = models.IntegerField()
     statement_descriptor = models.TextField(null=True)
     subtotal = models.IntegerField()
-    tax = models.IntegerField()
+    tax = models.IntegerField(null=True)
     total = models.IntegerField()
 
 
 class InvoiceItem(StripeModel):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, null=True)
     # Duplicated since in the event that a customer switches plans,
     # InvoiceItem.subscription will not equal Invoice.subscription
     subscription = models.ForeignKey(Subscription, on_delete=models.CASCADE, null=True)

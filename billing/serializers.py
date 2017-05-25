@@ -57,14 +57,13 @@ class CardSerializer(serializers.Serializer):
     address_state = serializers.CharField(max_length=100, required=False)
     address_zip = serializers.CharField(max_length=15, required=False)
     address_country = serializers.CharField(max_length=255, required=False)
-    number = serializers.CharField(max_length=100, write_only=True, required=False)
     exp_month = serializers.IntegerField(min_value=1, max_value=12, required=False)
     exp_year = serializers.IntegerField(required=False)
-    cvc = serializers.IntegerField(write_only=True, required=False)
 
     token = serializers.CharField(max_length=255, required=False)
 
     # Begin read-only fields
+    id = serializers.UUIDField
     customer = serializers.PrimaryKeyRelatedField(read_only=True)
     address_line1_check = serializers.CharField(read_only=True)
     address_zip_check = serializers.CharField(read_only=True)
@@ -123,7 +122,6 @@ class CustomerSerializer(serializers.ModelSerializer):
         return customer
 
     def update(self, instance, validated_data):
-        # TODO: Prevent changing the Customer.user
         stripe_obj = stripe.Customer.retrieve(instance.stripe_id)
 
         for key in validated_data:
@@ -143,8 +141,11 @@ class CustomerSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
-        fields = ("customer", "plan")
-        read_only_fields = ('stripe_id', 'created')
+        fields = ("id", "customer", "plan")
+        read_only_fields = ('stripe_id', 'created', 'livemode', 'application_fee_percent',
+                            'cancel_at_period_end', 'canceled_at', 'current_period_start',
+                            'current_period_end', 'start', 'ended_at', 'quantity', 'status',
+                            'trial_start', 'trial_end')
 
     def create(self, validated_data):
         customer = validated_data.get("customer")

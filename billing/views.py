@@ -1,5 +1,8 @@
 import logging
 import stripe
+from datetime import datetime
+
+from django.utils import timezone
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -32,12 +35,23 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
 class CardViewSet(mixins.CreateModelMixin,
                   mixins.RetrieveModelMixin,
+                  mixins.ListModelMixin,
                   mixins.UpdateModelMixin,
                   mixins.DestroyModelMixin,
-                  NamespaceMixin,
                   viewsets.GenericViewSet):
     queryset = Card.objects.all()
     serializer_class = CardSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        card = Card.objects.get(pk=kwargs.get('pk'),
+                                customer__user=request.user)
+        serializer = self.serializer_class(card)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    def list(self, request, *args, **kwargs):
+        cards = Card.objects.filter(customer__user=request.user)
+        serializer = self.serializer_class(cards, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         # Assuming for now that we should only delete the customer record,
@@ -77,7 +91,10 @@ class SubscriptionViewSet(NamespaceMixin,
         stripe_obj = stripe.Subscription.retrieve(instance.stripe_id)
 
         stripe_response = stripe_obj.delete()
-        instance.delete()
+        instance.canceled_at = timezone.make_aware(datetime.now())
+        instance.ended_at = timezone.make_aware(datetime.now())
+        instance.status = stripe_response['status']
+        instance.save()
 
         data = {'stripe_id': stripe_response['id'], 'deleted': True}
         return Response(data=data, status=status.HTTP_204_NO_CONTENT)
