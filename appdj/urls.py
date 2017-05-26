@@ -19,7 +19,6 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import NotFound, APIException
-from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
 from rest_framework_nested import routers
 
 from base.swagger.views import get_swagger_view
@@ -27,6 +26,7 @@ from projects import views as project_views
 from servers import views as servers_views
 from users import views as user_views
 from infrastructure import views as infra_views
+from jwt_auth import views as jwt_views
 from triggers import views as trigger_views
 
 router = routers.DefaultRouter()
@@ -56,9 +56,9 @@ schema_view = get_swagger_view(title='3blades API', url=settings.FORCE_SCRIPT_NA
 
 urlpatterns = [
     url(r'^auth/simple-token-auth/$', user_views.ObtainAuthToken.as_view()),
-    url(r'^auth/jwt-token-auth/$', obtain_jwt_token),
-    url(r'^auth/jwt-token-refresh/$', refresh_jwt_token),
-    url(r'^auth/jwt-token-verify/$', verify_jwt_token),
+    url(r'^auth/jwt-token-auth/$', jwt_views.ObtainJSONWebToken.as_view(), name='obtain-jwt'),
+    url(r'^auth/jwt-token-refresh/$', jwt_views.RefreshJSONWebToken.as_view(), name='refresh-jwt'),
+    url(r'^auth/jwt-token-verify/$', jwt_views.VerifyJSONWebToken.as_view(), name='verify-jwt'),
     url(r'^auth/', include('rest_framework_social_oauth2.urls')),
     url(r'^swagger/$', schema_view),
     url(r'^tbs-admin/', admin.site.urls),

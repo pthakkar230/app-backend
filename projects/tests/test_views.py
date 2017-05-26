@@ -99,7 +99,7 @@ class ProjectFileTest(APITestCase):
         url = reverse('file-list', kwargs=self.url_kwargs)
         file_content = b'test'
         data = dict(
-            path='test.py',
+            path='test/test.py',
             encoding='utf-8',
             content=base64.b64encode(file_content),
             author=self.user.pk,
