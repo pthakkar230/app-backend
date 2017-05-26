@@ -84,6 +84,7 @@ class File(models.Model):
 
     def save(self, content='', **kwargs):
         if not self.sys_path.exists():
+            self.sys_path.parent.mkdir(parents=True, exist_ok=True)
             self.sys_path.touch()
         if content:
             self.sys_path.write_bytes(content)
