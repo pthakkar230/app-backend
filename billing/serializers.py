@@ -6,7 +6,11 @@ from rest_framework import serializers
 from billing.models import (Customer, Card,
                             Plan, Subscription,
                             Invoice)
-from billing.stripe_utils import convert_stripe_object, create_stripe_customer_from_user
+from billing.stripe_utils import (convert_stripe_object,
+                                  create_stripe_customer_from_user,
+                                  create_plan_in_stripe,
+                                  create_subscription_in_stripe,
+                                  create_card_in_stripe)
 log = logging.getLogger('billing')
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -18,17 +22,7 @@ class PlanSerializer(serializers.ModelSerializer):
         read_only_fields = ('stripe_id', 'created')
 
     def create(self, validated_data):
-        stripe_response = stripe.Plan.create(id=validated_data.get('name').lower().replace(" ", "-"),
-                                             amount=validated_data.get('amount'),
-                                             currency=validated_data.get('currency'),
-                                             interval=validated_data.get('interval'),
-                                             interval_count=validated_data.get('interval_count'),
-                                             name=validated_data.get('name'),
-                                             statement_descriptor=validated_data.get('statement_descriptor'),
-                                             trial_period_days=validated_data.get('trial_period_days'))
-
-        converted_data = convert_stripe_object(Plan, stripe_response)
-        return Plan.objects.create(**converted_data)
+        return create_plan_in_stripe(validated_data)
 
     def update(self, instance, validated_data):
         stripe_obj = stripe.Plan.retrieve(instance.stripe_id)
@@ -63,7 +57,7 @@ class CardSerializer(serializers.Serializer):
     token = serializers.CharField(max_length=255, required=False)
 
     # Begin read-only fields
-    id = serializers.UUIDField
+    id = serializers.UUIDField(read_only=True)
     customer = serializers.PrimaryKeyRelatedField(read_only=True)
     address_line1_check = serializers.CharField(read_only=True)
     address_zip_check = serializers.CharField(read_only=True)
@@ -76,21 +70,7 @@ class CardSerializer(serializers.Serializer):
     created = serializers.DateTimeField(read_only=True)
 
     def create(self, validated_data):
-        user_pk = validated_data.pop("user")
-        customer = Customer.objects.get(user__pk=user_pk)
-        stripe_cust = stripe.Customer.retrieve(customer.stripe_id)
-
-        token = validated_data.get("token")
-        if token is None:
-            validated_data['object'] = "card"
-            stripe_resp = stripe_cust.sources.create(source=validated_data)
-        else:
-            stripe_resp = stripe_cust.sources.create(source=token)
-
-        stripe_resp['customer'] = customer.stripe_id
-
-        converted_data = convert_stripe_object(Card, stripe_resp)
-        return Card.objects.create(**converted_data)
+        return create_card_in_stripe(validated_data)
 
     def update(self, instance, validated_data):
         customer = instance.customer
@@ -148,13 +128,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                             'trial_start', 'trial_end')
 
     def create(self, validated_data):
-        customer = validated_data.get("customer")
-        plan = validated_data.get("plan")
-
-        stripe_response = stripe.Subscription.create(customer=customer.stripe_id,
-                                                     plan=plan.stripe_id)
-        converted_data = convert_stripe_object(Subscription, stripe_response)
-        return Subscription.objects.create(**converted_data)
+        return create_subscription_in_stripe(validated_data)
 
 
 class InvoiceSerializer(serializers.ModelSerializer):

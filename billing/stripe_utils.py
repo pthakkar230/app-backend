@@ -5,7 +5,9 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
-from billing.models import Customer, Invoice
+from billing.models import (Customer, Invoice,
+                            Plan, Subscription,
+                            Card)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 log = logging.getLogger('billing')
@@ -68,6 +70,48 @@ def create_stripe_customer_from_user(auth_user):
 
     converted_data = convert_stripe_object(Customer, stripe_response)
     return Customer.objects.create(**converted_data)
+
+
+def create_plan_in_stripe(validated_data):
+    stripe_response = stripe.Plan.create(id=validated_data.get('name').lower().replace(" ", "-"),
+                                         amount=validated_data.get('amount'),
+                                         currency=validated_data.get('currency'),
+                                         interval=validated_data.get('interval'),
+                                         interval_count=validated_data.get('interval_count'),
+                                         name=validated_data.get('name'),
+                                         statement_descriptor=validated_data.get('statement_descriptor'),
+                                         trial_period_days=validated_data.get('trial_period_days'))
+
+    converted_data = convert_stripe_object(Plan, stripe_response)
+    return Plan.objects.create(**converted_data)
+
+
+def create_subscription_in_stripe(validated_data):
+    customer = validated_data.get("customer")
+    plan = validated_data.get("plan")
+
+    stripe_response = stripe.Subscription.create(customer=customer.stripe_id,
+                                                 plan=plan.stripe_id)
+    converted_data = convert_stripe_object(Subscription, stripe_response)
+    return Subscription.objects.create(**converted_data)
+
+
+def create_card_in_stripe(validated_data):
+    user_pk = validated_data.pop("user")
+    customer = Customer.objects.get(user__pk=user_pk)
+    stripe_cust = stripe.Customer.retrieve(customer.stripe_id)
+
+    token = validated_data.get("token")
+    if token is None:
+        validated_data['object'] = "card"
+        stripe_resp = stripe_cust.sources.create(source=validated_data)
+    else:
+        stripe_resp = stripe_cust.sources.create(source=token)
+
+    stripe_resp['customer'] = customer.stripe_id
+
+    converted_data = convert_stripe_object(Card, stripe_resp)
+    return Card.objects.create(**converted_data)
 
 
 def sync_invoices_for_customer(customer):

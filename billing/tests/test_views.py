@@ -22,6 +22,7 @@ def create_plan_dict():
                                                                                      "id", "metadata"]}
     return data_dict
 
+
 class CustomerTest(APITestCase):
     def setUp(self):
         self.user = UserFactory(is_staff=True)
@@ -97,6 +98,20 @@ class CustomerTest(APITestCase):
 
         self.assertTrue(stripe_response['deleted'])
 
+    def test_customer_without_subscription_rejected(self):
+        # We've been bypassing subscription requirement by
+        # making staff users to this point
+        self.user.is_staff = False
+        self.user.save()
+        customer = create_stripe_customer_from_user(self.user)
+        self.customers_to_delete = [customer]
+        url = reverse("customer-detail", kwargs={'namespace': self.user.username,
+                                                 'pk': customer.pk})
+        response = self.client.get(url, follow=True)
+        self.assertEqual(response.status_code, status.HTTP_402_PAYMENT_REQUIRED)
+        self.user.is_staff = True
+        self.user.save()
+
 
 class PlanTest(APITestCase):
     def setUp(self):
@@ -119,7 +134,7 @@ class PlanTest(APITestCase):
 
     def test_create_plan(self):
         url = reverse("plan-list", kwargs={'namespace': self.user.username})
-        data = self._create_plan_dict()
+        data = create_plan_dict()
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Plan.objects.count(), 1)
@@ -172,7 +187,8 @@ class PlanTest(APITestCase):
 class CardTest(APITestCase):
     def setUp(self):
         self.user = UserFactory(first_name="Foo",
-                                last_name="Bar")
+                                last_name="Bar",
+                                is_staff=True)
         self.customer = create_stripe_customer_from_user(self.user)
         self.token_header = "Token {auth}".format(auth=self.user.auth_token.key)
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
@@ -241,7 +257,8 @@ class CardTest(APITestCase):
 class SubscriptionTest(APITestCase):
     def setUp(self):
         self.user = UserFactory(first_name="Foo",
-                                last_name="Bar")
+                                last_name="Bar",
+                                is_staff=True)
         self.customer = create_stripe_customer_from_user(self.user)
         self.token_header = "Token {auth}".format(auth=self.user.auth_token.key)
         self.client = self.client_class(HTTP_AUTHORIZATION=self.token_header)
