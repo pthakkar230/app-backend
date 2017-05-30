@@ -50,6 +50,8 @@ services:
     ports:
       - "3000:3000"
     env_file: env
-  stats:
-    image: 3blades/docker-stats
+  events:
+    image: 3blades/docker-events
     env_file: env
+    ports:
+      - "8000:8000"
