@@ -45,11 +45,6 @@ services:
       - api
     volumes_from:
       - api
-  notifications-server:
-    image: 3blades/notifications-server:latest
-    ports:
-      - "3000:3000"
-    env_file: env
   events:
     image: 3blades/docker-events
     env_file: env
