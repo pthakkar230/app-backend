@@ -19,6 +19,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'description', 'private', 'last_updated', 'owner', 'collaborators')
 
     def create(self, validated_data):
+        collaborators = validated_data.pop('collaborators')
         project = super().create(validated_data)
         request = self.context['request']
         Collaborator.objects.create(project=project, owner=True, user=request.user)
