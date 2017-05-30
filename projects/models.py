@@ -7,6 +7,7 @@ from django.urls import reverse
 from social_django.models import UserSocialAuth
 
 from base.namespace import Namespace
+from utils import alphanumeric
 
 
 class ProjectQuerySet(models.QuerySet):
@@ -15,7 +16,7 @@ class ProjectQuerySet(models.QuerySet):
 
 
 class Project(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, validators=[alphanumeric])
     description = models.CharField(max_length=400, blank=True)
     private = models.BooleanField(default=True)
     last_updated = models.DateTimeField(auto_now=True)
@@ -28,7 +29,13 @@ class Project(models.Model):
         return self.name
 
     def get_absolute_url(self, namespace: Namespace):
-        return reverse('project-detail', kwargs={'namespace': namespace.name, 'pk': str(self.id)})
+        return self.get_action_url(namespace, 'detail')
+
+    def get_action_url(self, namespace, action):
+        return reverse(
+            'project-{}'.format(action),
+            kwargs={'namespace': namespace.name, 'pk': str(self.id)}
+        )
 
     @property
     def owner(self):
@@ -77,6 +84,7 @@ class File(models.Model):
 
     def save(self, content='', **kwargs):
         if not self.sys_path.exists():
+            self.sys_path.parent.mkdir(parents=True, exist_ok=True)
             self.sys_path.touch()
         if content:
             self.sys_path.write_bytes(content)

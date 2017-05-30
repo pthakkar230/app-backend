@@ -1,29 +1,24 @@
-from rest_framework import status, generics
+from rest_framework import status, generics, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from appdj.celery import app as celery_app
-from base.views import UUIDRegexMixin
 from .serializers import ActionSerializer
 from .models import Action
 
 
 class ActionList(generics.ListAPIView):
-    """
-    Retrieve a list of actions in chronological order
-    """
     queryset = Action.objects.select_related('content_type')
     serializer_class = ActionSerializer
     filter_fields = ('state', 'start_date', 'end_date')
 
 
-class ActionDetail(UUIDRegexMixin, generics.RetrieveAPIView):
-    """
-    Gets an action object by ID
-    """
+class ActionViewSet(viewsets.ModelViewSet):
     queryset = Action.objects.select_related('content_type')
     serializer_class = ActionSerializer
+    filter_fields = ('state', 'start_date', 'end_date')
+    exclude_from_schema = True
 
 
 @api_view(['POST'])

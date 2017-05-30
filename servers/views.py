@@ -22,9 +22,9 @@ class ServerViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['post'])
-def start(request, project_pk, server_pk):
+def start(request, project_pk, pk):
     start_server.apply_async(
-        args=[server_pk],
+        args=[pk],
         task_id=str(request.action.pk)
     )
     return Response(status=status.HTTP_201_CREATED)
@@ -33,7 +33,7 @@ def start(request, project_pk, server_pk):
 @api_view(['post'])
 def stop(request, *args, **kwargs):
     stop_server.apply_async(
-        args=[kwargs.get('server_pk')],
+        args=[kwargs.get('pk')],
         task_id=str(request.action.pk)
     )
     return Response(status=status.HTTP_201_CREATED)
@@ -42,7 +42,7 @@ def stop(request, *args, **kwargs):
 @api_view(['post'])
 def terminate(request, *args, **kwargs):
     terminate_server.apply_async(
-        args=[kwargs.get('server_pk')],
+        args=[kwargs.get('pk')],
         task_id=str(request.action.pk)
     )
     return Response(status=status.HTTP_201_CREATED)

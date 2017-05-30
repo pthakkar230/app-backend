@@ -1,10 +1,10 @@
 import ujson
 
-from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import get_view_name
+from rest_framework.authtoken.models import Token
 
 from .models import Action
 
@@ -20,32 +20,45 @@ class ActionMiddleware(object):
             body = ujson.loads(request.body)
         except ValueError:
             body = {}
-        action = Action(
+        user = None
+        token_header = request.META.get('HTTP_AUTHORIZATION')
+        if token_header and token_header.startswith('Token '):
+            token = token_header.split(' ')[1]
+            try:
+                token_obj = Token.objects.get(key=token)
+            except Token.DoesNotExist:
+                pass
+            else:
+                user = token_obj.user
+        filter_kwargs = dict(
             path=path,
+            user=user,
+            state=Action.CREATED,
+        )
+        defaults = dict(
+            action=self._get_action_name(request),
             method=request.method.lower(),
             user_agent=request.META.get('HTTP_USER_AGENT', ''),
             start_date=start,
-            state=Action.PENDING,
             payload=body,
             ip=self._get_client_ip(request),
+            state=Action.PENDING,
         )
-        action.save()
+        action = Action.objects.get_or_create_action(filter_kwargs, defaults)
         request.action = action
 
         response = self.get_response(request)  # type: HttpResponse
 
         action.refresh_from_db()
-        action.action = self._get_action_name(request)
         self._set_action_state(action, response.status_code)
         self._set_action_object(action, request, response)
-        if hasattr(request, "user"):
-            self._set_action_user(action, request.user)
         action.end_date = timezone.now()
         action.save()
         return response
 
     @staticmethod
     def _set_action_state(action, status_code):
+        action.state = Action.PENDING
         if action.can_be_cancelled:
             action.state = Action.IN_PROGRESS
         elif status.is_client_error(status_code):
@@ -62,11 +75,6 @@ class ActionMiddleware(object):
             content_object = self._get_object_from_post_data(request, response)
             if content_object is not None:
                 action.content_object = content_object
-
-    @staticmethod
-    def _set_action_user(action, user):
-        if not isinstance(user, AnonymousUser):
-            action.user = user
 
     def _get_object_from_post_data(self, request, response):
         model = self._get_model_from_func(request.resolver_match.func)

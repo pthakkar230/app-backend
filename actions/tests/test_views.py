@@ -5,6 +5,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from actions.models import Action
+from projects.tests.factories import ProjectFactory
 from users.tests.factories import UserFactory
 from .factories import ActionFactory
 
@@ -48,3 +50,21 @@ class ActionTest(APITestCase):
         url = reverse('action-cancel', kwargs={'pk': str(action.pk)})
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_action(self):
+        url = reverse('action-create')
+        action_content_object = ProjectFactory()
+        data = dict(
+            action_name='detail',
+            action="Project delete",
+            user_agent="Test client",
+            object_id=str(action_content_object.pk),
+            method='DELETE',
+            content_type='project',
+            state=Action.SUCCESS,
+        )
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 201)
+        project_delete_path = reverse(
+            'project-detail', kwargs={'namespace': self.user.username, 'pk': str(action_content_object.pk)})
+        self.assertEqual(response.data['path'], project_delete_path)

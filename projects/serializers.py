@@ -2,6 +2,7 @@ import base64
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from pathlib import Path
 from rest_framework import serializers
 from social_django.models import UserSocialAuth
@@ -10,9 +11,11 @@ from .models import Project, File, Collaborator, SyncedResource
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    owner = serializers.CharField(source='get_owner_name', read_only=True)
+
     class Meta:
         model = Project
-        fields = ('id', 'name', 'description', 'private', 'last_updated')
+        fields = ('id', 'name', 'description', 'private', 'last_updated', 'owner')
 
     def create(self, validated_data):
         project = super().create(validated_data)
@@ -46,10 +49,8 @@ class FileSerializer(serializers.ModelSerializer):
         fields = ('id', 'path', 'encoding', 'public', 'content', 'size', 'author', 'project')
 
     def create(self, validated_data):
-        author = validated_data.pop('author')
-        project = validated_data.pop('project')
         content = validated_data.pop('content')
-        project_file = File(author=author, project=project, **validated_data)
+        project_file = File(**validated_data)
         project_file.save(content=content)
         return project_file
 
@@ -68,19 +69,20 @@ class FileSerializer(serializers.ModelSerializer):
 
 
 class CollaboratorSerializer(serializers.ModelSerializer):
-    email = serializers.CharField(source='user.email')
+    email = serializers.CharField(source='user.email', read_only=True)
+    member = serializers.CharField(write_only=True)
 
     class Meta:
         model = Collaborator
-        fields = ('id', 'owner', 'joined', 'email')
+        fields = ('id', 'owner', 'joined', 'email', 'member')
 
     def create(self, validated_data):
-        email = validated_data.pop('user', {}).get('email')
+        member = validated_data.pop('member')
         project_id = self.context['view'].kwargs['project_pk']
         owner = validated_data.get("owner", False)
         if owner is True:
             Collaborator.objects.filter(project_id=project_id).update(owner=False)
-        user = get_user_model().objects.filter(email=email).first()
+        user = get_user_model().objects.filter(Q(username=member) | Q(email=member)).first()
         return Collaborator.objects.create(user=user, project_id=project_id, **validated_data)
 
 

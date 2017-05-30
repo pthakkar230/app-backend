@@ -5,6 +5,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.utils.encoding import force_bytes, force_text
 from django_redis.serializers.base import BaseSerializer
 from hashids import Hashids
@@ -64,3 +65,13 @@ class UJSONSerializer(BaseSerializer):
 
     def loads(self, value):
         return ujson.loads(force_text(value))
+
+
+def copy_model(model):
+    if model is None:
+        return
+    new_object = model.__class__.objects.get(pk=model.pk)
+    new_object.pk = None
+    return new_object
+
+alphanumeric = RegexValidator(r'^[0-9a-zA-Z-]*$', "You can use only alphanumeric characters.")

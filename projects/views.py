@@ -3,6 +3,7 @@ from rest_framework import viewsets, status
 from base.views import NamespaceMixin
 from .serializers import ProjectSerializer, FileSerializer, CollaboratorSerializer, SyncedResourceSerializer
 from .models import Project, File, Collaborator, SyncedResource
+from .filters import FileFilter
 from projects.tasks import sync_github
 
 
@@ -13,13 +14,13 @@ class ProjectViewSet(NamespaceMixin, viewsets.ModelViewSet):
     ordering_fileds = ('name',)
 
 
-class FileViewSet(NamespaceMixin, viewsets.ModelViewSet):
+class FileViewSet(viewsets.ModelViewSet):
     queryset = File.objects.select_related('author', 'project')
     serializer_class = FileSerializer
-    filter_fields = ('path',)
+    filter_class = FileFilter
 
 
-class CollaboratorViewSet(NamespaceMixin, viewsets.ModelViewSet):
+class CollaboratorViewSet(viewsets.ModelViewSet):
     queryset = Collaborator.objects.all()
     serializer_class = CollaboratorSerializer
 
@@ -27,7 +28,7 @@ class CollaboratorViewSet(NamespaceMixin, viewsets.ModelViewSet):
         return super().get_queryset().filter(project_id=self.kwargs.get('project_pk'))
 
 
-class SyncedResourceViewSet(NamespaceMixin, viewsets.ModelViewSet):
+class SyncedResourceViewSet(viewsets.ModelViewSet):
     queryset = SyncedResource.objects.all()
     serializer_class = SyncedResourceSerializer
 

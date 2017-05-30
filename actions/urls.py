@@ -1,9 +1,11 @@
 from django.conf.urls import url
 
-from .views import ActionList, cancel, ActionDetail
+from .views import ActionList, cancel, ActionViewSet
 
 urlpatterns = [
     url(r'^$', ActionList.as_view(), name='action-list'),
+    url(r'^create/$', ActionViewSet.as_view({'post': 'create'}), name='action-create'),
     url(r'^(?P<pk>[\w-]+)/cancel/$', cancel, name='action-cancel'),
-    url(r'^(?P<pk>[\w-]+)/$', ActionDetail.as_view(), name='action-detail'),
+    url(r'^(?P<pk>[\w-]+)/$', ActionViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update'}),
+        name='action-detail'),
 ]

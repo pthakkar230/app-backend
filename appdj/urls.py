@@ -19,18 +19,22 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import NotFound, APIException
-from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
 from rest_framework_nested import routers
 
 from base.swagger.views import get_swagger_view
 from projects import views as project_views
 from servers import views as servers_views
 from users import views as user_views
+from infrastructure import views as infra_views
+from jwt_auth import views as jwt_views
+from triggers import views as trigger_views
 
 router = routers.DefaultRouter()
 
 router.register(r'servers/options/resources', servers_views.EnvironmentResourceViewSet)
 router.register(r'users', user_views.UserViewSet)
+router.register(r'hosts', infra_views.DockerHostViewSet)
+router.register(r'triggers', trigger_views.TriggerViewSet)
 user_router = routers.NestedSimpleRouter(router, r'users', lookup='user')
 user_router.register(r'emails', user_views.EmailViewSet)
 user_router.register(r'integrations', user_views.IntegrationViewSet)
@@ -46,19 +50,22 @@ project_router.register(r'servers/(?P<server_pk>[^/.]+)/run-stats',
 project_router.register(r'servers/(?P<server_pk>[^/.]+)/stats',
                         servers_views.ServerStatisticsViewSet)
 project_router.register(r'collaborators', project_views.CollaboratorViewSet)
+router.register(r'service/(?P<server_pk>[^/.]+)/trigger', trigger_views.ServerActionViewSet)
 
 schema_view = get_swagger_view(title='3blades API', url=settings.FORCE_SCRIPT_NAME or '/')
 
 urlpatterns = [
     url(r'^auth/simple-token-auth/$', user_views.ObtainAuthToken.as_view()),
-    url(r'^auth/jwt-token-auth/$', obtain_jwt_token),
-    url(r'^auth/jwt-token-refresh/$', refresh_jwt_token),
-    url(r'^auth/jwt-token-verify/$', verify_jwt_token),
+    url(r'^auth/jwt-token-auth/$', jwt_views.ObtainJSONWebToken.as_view(), name='obtain-jwt'),
+    url(r'^auth/jwt-token-refresh/$', jwt_views.RefreshJSONWebToken.as_view(), name='refresh-jwt'),
+    url(r'^auth/jwt-token-verify/$', jwt_views.VerifyJSONWebToken.as_view(), name='verify-jwt'),
     url(r'^auth/', include('rest_framework_social_oauth2.urls')),
     url(r'^swagger/$', schema_view),
-    url(r'^admin/', admin.site.urls),
+    url(r'^tbs-admin/', admin.site.urls),
     url(r'^actions/', include('actions.urls')),
     url(r'^servers/(?P<server_pk>[^/.]+)$', servers_views.server_internal_details, name="server_internal"),
+    url(r'^(?P<namespace>[\w-]+)/triggers/send-slack-message/$', trigger_views.SlackMessageView.as_view(),
+        name='send-slack-message'),
     url(r'^(?P<namespace>[\w-]+)/', include(router.urls)),
     url(r'^(?P<namespace>[\w-]+)/', include(project_router.urls)),
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/synced-resources/$',
@@ -70,13 +77,15 @@ urlpatterns = [
     url(r'^(?P<namespace>[\w-]+)/users/(?P<user_pk>[\w-]+)/api-key/$', user_views.api_key, name='api_key'),
     url(r'^(?P<namespace>[\w-]+)/users/(?P<user_pk>[\w-]+)/api-key/reset/$', user_views.reset_api_key,
         name='reset_api_key'),
-    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/is-allowed/',
+    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/is-allowed/$',
         servers_views.IsAllowed.as_view(), name='is_allowed'),
-    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/start/',
+    url(r'^(?P<namespace>[\w-]+)/service/(?P<server_pk>[^/.]+)/trigger/(?P<pk>[^/.]+)/call/$',
+        trigger_views.call_trigger, name='server-trigger-call'),
+    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/start/$',
         servers_views.start, name='server-start'),
-    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/stop/',
+    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/stop/$',
         servers_views.stop, name='server-stop'),
-    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<server_pk>[^/.]+)/terminate/',
+    url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/terminate/$',
         servers_views.terminate, name='server-terminate'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

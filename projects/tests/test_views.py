@@ -20,7 +20,7 @@ class ProjectTest(APITestCase):
     def test_create_project(self):
         url = reverse('project-list', kwargs={'namespace': self.user.username})
         data = dict(
-            name='Test 1',
+            name='Test1',
             description='Test description',
         )
         response = self.client.post(url, data)
@@ -44,13 +44,14 @@ class ProjectTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(project.name, response.data['name'])
         self.assertEqual(str(project.pk), response.data['id'])
+        self.assertEqual(self.user.username, response.data['owner'])
 
     def test_project_update(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
         url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         data = dict(
-            name='Test 1',
+            name='Test-1',
             description='Test description',
         )
         response = self.client.put(url, data)
@@ -63,7 +64,7 @@ class ProjectTest(APITestCase):
         project = collaborator.project
         url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         data = dict(
-            name='Test 1',
+            name='Test-1',
         )
         response = self.client.patch(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -98,7 +99,7 @@ class ProjectFileTest(APITestCase):
         url = reverse('file-list', kwargs=self.url_kwargs)
         file_content = b'test'
         data = dict(
-            path='test.py',
+            path='test/test.py',
             encoding='utf-8',
             content=base64.b64encode(file_content),
             author=self.user.pk,

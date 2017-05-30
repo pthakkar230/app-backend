@@ -12,11 +12,12 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 import dj_database_url
+import datetime
 import uuid
 from django.urls import reverse_lazy
-
+from appdj.settings import BASE_DIR
+from appdj.settings.tbslog import TBS_LOGGING
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
     'storages',
     'django_extensions',
     'cacheops',
+    'corsheaders',
 
     'base',
     'users',
@@ -56,18 +58,21 @@ INSTALLED_APPS = [
     'projects',
     'servers',
     'actions',
+    'infrastructure',
+    'triggers',
+    'jwt_auth',
 ]
 
 MIDDLEWARE = [
-    'actions.middleware.ActionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'actions.middleware.ActionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'base.middleware.NamespaceMiddleware',
 ]
 
@@ -101,6 +106,7 @@ DATABASES = {
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.google.GoogleOAuth2',
     'social_core.backends.github.GithubOAuth2',
+    'social_core.backends.slack.SlackOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
@@ -149,6 +155,10 @@ PASSWORD_HASHERS = [
 
 BCRYPT_LOG_ROUNDS = 13
 
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=30),
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
@@ -173,6 +183,9 @@ STATIC_URL = "https://{}/".format(AWS_S3_CUSTOM_DOMAIN)
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "staticfiles"),
+]
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
@@ -287,3 +300,13 @@ SERVER_ENDPOINT_URLS = {'jupyter': '/jupyter/tree', 'restful': '/restfull/'}
 SERVER_COMMANDS = {
     "jupyter": "jupyter notebook --no-browser --NotebookApp.token=''",
 }
+
+# slack
+
+SOCIAL_AUTH_SLACK_KEY = os.environ.get('SLACK_KEY')
+SOCIAL_AUTH_SLACK_SECRET = os.environ.get('SLACK_SECRET')
+
+# CORS requests
+CORS_ORIGIN_ALLOW_ALL = True
+
+LOGGING = TBS_LOGGING

@@ -47,13 +47,17 @@ class Server(models.Model):
     auto_restart = models.BooleanField(default=False)
     connected = models.ManyToManyField('self', blank=True, related_name='servers')
     image_name = models.CharField(max_length=100, blank=True)
+    host = models.ForeignKey('infrastructure.DockerHost', related_name='servers', null=True, blank=True)
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self, namespace):
+        return self.get_action_url(namespace, 'detail')
+
+    def get_action_url(self, namespace, action):
         return reverse(
-            'server-detail',
+            'server-{}'.format(action),
             kwargs={'namespace': namespace.name, 'project_pk': str(self.project.pk), 'pk': str(self.pk)}
         )
 
@@ -71,19 +75,9 @@ class Server(models.Model):
 
     @property
     def status(self):
-        cache = get_redis_connection("default")
-        status = cache.hget(self.state_cache_key, "status")
-        if status is None:
-            spawner = DockerSpawner(self)
-            status = spawner.status()
-            cache.hset(self.state_cache_key, "status", status)
+        spawner = DockerSpawner(self)
+        status = spawner.status()
         return status.decode() if isinstance(status, bytes) else status
-
-    @status.setter
-    def status(self, value):
-        if self.status != value:
-            cache = get_redis_connection("default")
-            cache.hset(self.state_cache_key, "status", value)
 
     def needs_update(self):
         cache = get_redis_connection("default")

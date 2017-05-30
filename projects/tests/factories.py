@@ -9,7 +9,7 @@ class ProjectFactory(factory.django.DjangoModelFactory):
         model = Project
         django_get_or_create = ('name',)
 
-    name = factory.Sequence(lambda o: 'project {}'.format(o))
+    name = factory.Sequence(lambda o: 'project{}'.format(o))
 
 
 class CollaboratorFactory(factory.django.DjangoModelFactory):
