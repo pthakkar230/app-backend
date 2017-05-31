@@ -43,7 +43,6 @@ class Customer(StripeModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL)
     # Should account_balance really be exposed?
     account_balance = models.IntegerField(default=0)
-    # TODO: Delete this field. Useless
     currency = models.CharField(max_length=10, null=True)
     default_source = models.TextField(null=True)
     last_invoice_sync = models.DateTimeField(null=True)

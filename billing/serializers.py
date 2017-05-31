@@ -42,8 +42,6 @@ class CardSerializer(serializers.Serializer):
     # TODO: Create some sort of validator that validates that if token is not present, the rest of these are
     # Note: Tokens are heavily preferred, but CLI Tools require manually passing all arguments.
     # Hence this mess.
-    # Should probably be a PrimaryKey field but have had trouble w/ config
-    user = serializers.UUIDField(write_only=True, required=False)
     name = serializers.CharField(max_length=200, required=False)
     address_line1 = serializers.CharField(max_length=255, required=False)
     address_line2 = serializers.CharField(max_length=255, required=False)
@@ -70,7 +68,8 @@ class CardSerializer(serializers.Serializer):
     created = serializers.DateTimeField(read_only=True)
 
     def create(self, validated_data):
-        return create_card_in_stripe(validated_data)
+        return create_card_in_stripe(validated_data,
+                                     user=self.context['request'].user)
 
     def update(self, instance, validated_data):
         customer = instance.customer

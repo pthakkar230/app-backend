@@ -48,6 +48,14 @@ class CardViewSet(mixins.CreateModelMixin,
         serializer = self.serializer_class(card)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.create(validated_data=request.data)
+        return Response(data=self.serializer_class(instance).data,
+                        status=status.HTTP_201_CREATED)
+
     def list(self, request, *args, **kwargs):
         cards = Card.objects.filter(customer__user=request.user)
         serializer = self.serializer_class(cards, many=True)

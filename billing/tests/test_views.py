@@ -207,8 +207,7 @@ class CardTest(APITestCase):
 
     def test_create_card(self):
         url = reverse("card-list", kwargs={'namespace': self.user.username})
-        data = {'user': str(self.user.pk),
-                'token': "tok_visa"}
+        data = {'token': "tok_visa"}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Card.objects.count(), 1)

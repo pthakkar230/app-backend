@@ -96,9 +96,16 @@ def create_subscription_in_stripe(validated_data):
     return Subscription.objects.create(**converted_data)
 
 
-def create_card_in_stripe(validated_data):
-    user_pk = validated_data.pop("user")
-    customer = Customer.objects.get(user__pk=user_pk)
+def create_card_in_stripe(validated_data, user=None):
+    user_pk = validated_data.get("user")
+    if user is None and user_pk is None:
+        raise ValueError("Validated_data must contain 'user', or the user object"
+                         " must be passed as a kwarg.")
+    if user is None:
+        customer = Customer.objects.get(user__pk=user_pk)
+    else:
+        customer = user.customer
+
     stripe_cust = stripe.Customer.retrieve(customer.stripe_id)
 
     token = validated_data.get("token")
@@ -109,7 +116,7 @@ def create_card_in_stripe(validated_data):
         stripe_resp = stripe_cust.sources.create(source=token)
 
     stripe_resp['customer'] = customer.stripe_id
-
+    # TODO: Save address & related info even in tokenized case
     converted_data = convert_stripe_object(Card, stripe_resp)
     return Card.objects.create(**converted_data)
 
