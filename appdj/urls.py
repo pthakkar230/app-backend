@@ -107,6 +107,7 @@ def handler500(request):
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns += [
+        url(r'^auth/simple-token-auth/$', user_views.ObtainAuthToken.as_view()),
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
     urlpatterns = staticfiles_urlpatterns() + urlpatterns
