@@ -27,8 +27,13 @@ class UserViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
 
 
 class RegisterView(CreateAPIView):
+    """
+    User register
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = ()
+    authentication_classes = ()
 
 
 @api_view(['GET'])
