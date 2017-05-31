@@ -86,9 +86,17 @@ def create_plan_in_stripe(validated_data):
     return Plan.objects.create(**converted_data)
 
 
-def create_subscription_in_stripe(validated_data):
+def create_subscription_in_stripe(validated_data, user=None):
     customer = validated_data.get("customer")
-    plan = validated_data.get("plan")
+    if customer is None and user is None:
+        raise ValueError("Validated_data must contain 'user', or the user object"
+                         "must be passed as a kwarg.")
+    if customer is None:
+        customer = user.customer
+
+    plan_id = validated_data.get("plan")
+    plan = Plan.objects.get(pk=plan_id)
+    log.debug(("PLAN", plan))
 
     stripe_response = stripe.Subscription.create(customer=customer.stripe_id,
                                                  plan=plan.stripe_id)

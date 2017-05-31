@@ -120,14 +120,15 @@ class CustomerSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
-        fields = ("id", "customer", "plan")
+        fields = ("id", "plan")
         read_only_fields = ('stripe_id', 'created', 'livemode', 'application_fee_percent',
                             'cancel_at_period_end', 'canceled_at', 'current_period_start',
                             'current_period_end', 'start', 'ended_at', 'quantity', 'status',
                             'trial_start', 'trial_end')
 
     def create(self, validated_data):
-        return create_subscription_in_stripe(validated_data)
+        return create_subscription_in_stripe(validated_data,
+                                             user=self.context['request'].user)
 
 
 class InvoiceSerializer(serializers.ModelSerializer):

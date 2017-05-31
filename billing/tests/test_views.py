@@ -282,8 +282,7 @@ class SubscriptionTest(APITestCase):
     def _create_subscription_in_stripe(self):
         plan = self._create_plan_in_stripe()
         url = reverse("subscription-list", kwargs={'namespace': self.user.username})
-        data = {'customer': self.customer.pk,
-                'plan': plan.pk}
+        data = {'plan': plan.pk}
         self.client.post(url, data)
 
         subscription = Subscription.objects.get()
@@ -292,8 +291,7 @@ class SubscriptionTest(APITestCase):
     def test_subscription_create(self):
         plan = self._create_plan_in_stripe()
         url = reverse("subscription-list", kwargs={'namespace': self.user.username})
-        data = {'customer': self.customer.pk,
-                'plan': plan.pk}
+        data = {'plan': plan.pk}
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Subscription.objects.count(), 1)

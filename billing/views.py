@@ -94,6 +94,14 @@ class SubscriptionViewSet(NamespaceMixin,
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.create(validated_data=request.data)
+        return Response(data=self.serializer_class(instance).data,
+                        status=status.HTTP_201_CREATED)
+
     def destroy(self, request, *args, **kwargs):
         instance = Subscription.objects.get(pk=kwargs.get('pk'))
         stripe_obj = stripe.Subscription.retrieve(instance.stripe_id)
