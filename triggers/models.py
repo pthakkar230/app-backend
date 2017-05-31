@@ -16,6 +16,7 @@ class TriggerQuerySet(models.QuerySet):
 class Trigger(models.Model):
     ALLOWED_ACTIONS = ['server-stop', 'server-start', 'server-terminate', 'send-slack-message']
 
+    name = models.CharField(max_length=50, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='triggers')
     cause = models.ForeignKey('actions.Action', related_name='cause_triggers', blank=True, null=True)
     effect = models.ForeignKey('actions.Action', related_name='effect_triggers', blank=True, null=True)
@@ -36,7 +37,7 @@ class Trigger(models.Model):
         self._set_action_state(new_cause, Action.CREATED)
         if self.effect:
             self.effect.dispatch(url)
-        if self.webhook and 'url' in self.webhook:
+        if self.webhook and self.webhook.get('url'):
             resp = requests.post(self.webhook['url'], json=self.webhook.get('config', {}))
             resp.raise_for_status()
         self.effect = new_effect

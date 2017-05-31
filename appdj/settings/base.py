@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'actions',
     'infrastructure',
     'triggers',
+    'jwt_auth',
 ]
 
 MIDDLEWARE = [
