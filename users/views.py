@@ -3,7 +3,7 @@ from social_django.models import UserSocialAuth
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
-from rest_framework.generics import get_object_or_404
+from rest_framework.generics import get_object_or_404, CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -13,15 +13,22 @@ from utils import create_ssh_key
 from .models import Email
 from .serializers import UserSerializer, EmailSerializer, IntegrationSerializer, AuthTokenSerializer
 
+User = get_user_model()
+
 
 class UserViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
-    queryset = get_user_model().objects.filter(is_active=True).select_related('profile')
+    queryset = User.objects.filter(is_active=True).select_related('profile')
     serializer_class = UserSerializer
-    filter_fields = ('username',)
+    filter_fields = ('username', 'email')
 
     def perform_destroy(self, instance):
         instance.active = False
         instance.save()
+
+
+class RegisterView(CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 
 @api_view(['GET'])

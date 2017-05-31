@@ -59,6 +59,7 @@ urlpatterns = [
     url(r'^auth/jwt-token-auth/$', jwt_views.ObtainJSONWebToken.as_view(), name='obtain-jwt'),
     url(r'^auth/jwt-token-refresh/$', jwt_views.RefreshJSONWebToken.as_view(), name='refresh-jwt'),
     url(r'^auth/jwt-token-verify/$', jwt_views.VerifyJSONWebToken.as_view(), name='verify-jwt'),
+    url(r'^auth/register/$', user_views.RegisterView.as_view(), name='register'),
     url(r'^auth/', include('rest_framework_social_oauth2.urls')),
     url(r'^swagger/$', schema_view),
     url(r'^tbs-admin/', admin.site.urls),
