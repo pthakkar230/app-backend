@@ -19,6 +19,9 @@ class FileViewSet(viewsets.ModelViewSet):
     serializer_class = FileSerializer
     filter_class = FileFilter
 
+    def get_queryset(self):
+        return super().get_queryset().filter(project_id=self.kwargs.get('project_pk'))
+
 
 class CollaboratorViewSet(viewsets.ModelViewSet):
     queryset = Collaborator.objects.all()
