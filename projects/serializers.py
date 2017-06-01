@@ -3,6 +3,7 @@ import base64
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from guardian.shortcuts import assign_perm
 from pathlib import Path
 from rest_framework import serializers
 from social_django.models import UserSocialAuth
@@ -23,6 +24,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         project = super().create(validated_data)
         request = self.context['request']
         Collaborator.objects.create(project=project, owner=True, user=request.user)
+        assign_perm('write_project', request.user, project)
         Path(settings.RESOURCE_DIR, project.get_owner_name(), str(project.pk)).mkdir(parents=True, exist_ok=True)
         return project
 
@@ -73,18 +75,23 @@ class FileSerializer(serializers.ModelSerializer):
 class CollaboratorSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
     member = serializers.CharField(write_only=True)
+    permissions = serializers.MultipleChoiceField(choices=Project._meta.permissions)
 
     class Meta:
         model = Collaborator
-        fields = ('id', 'owner', 'joined', 'email', 'member')
+        fields = ('id', 'owner', 'joined', 'email', 'member', 'permissions')
 
     def create(self, validated_data):
+        permissions = validated_data.pop('permissions', [])
         member = validated_data.pop('member')
         project_id = self.context['view'].kwargs['project_pk']
+        project = Project.objects.get(pk=project_id)
         owner = validated_data.get("owner", False)
         if owner is True:
             Collaborator.objects.filter(project_id=project_id).update(owner=False)
         user = get_user_model().objects.filter(Q(username=member) | Q(email=member)).first()
+        for permission in permissions:
+            assign_perm(permission, user, project)
         return Collaborator.objects.create(user=user, project_id=project_id, **validated_data)
 
 
