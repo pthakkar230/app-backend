@@ -14,11 +14,12 @@ class EnvironmentResourceSerializer(serializers.ModelSerializer):
 class ServerSerializer(serializers.ModelSerializer):
     endpoint = serializers.SerializerMethodField()
     logs_url = serializers.SerializerMethodField()
+    status_url = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Server
         fields = ('id', 'name', 'created_at', 'image_name', 'environment_resources', 'startup_script', 'config',
-                  'status', 'connected', 'host', 'endpoint', 'logs_url')
+                  'status', 'connected', 'host', 'endpoint', 'logs_url', 'status_url')
         read_only_fields = ('created_at',)
         extra_kwargs = {
             'connected': {'allow_empty': True, 'required': False},
@@ -55,6 +56,13 @@ class ServerSerializer(serializers.ModelSerializer):
     def get_logs_url(self, obj):
         request = self.context['request']
         return 'ws://{host}/server/logs/{id}'.format(
+            host=get_current_site(request).domain,
+            id=obj.id,
+        )
+
+    def get_status_url(self, obj):
+        request = self.context['request']
+        return 'ws://{host}/server/status/{id}'.format(
             host=get_current_site(request).domain,
             id=obj.id,
         )
