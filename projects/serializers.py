@@ -72,11 +72,14 @@ class FileSerializer(serializers.ModelSerializer):
 
 class CollaboratorSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
     member = serializers.CharField(write_only=True)
 
     class Meta:
         model = Collaborator
-        fields = ('id', 'owner', 'joined', 'email', 'member')
+        fields = ('id', 'owner', 'joined', 'username', 'email', 'first_name', 'last_name', 'member')
 
     def create(self, validated_data):
         member = validated_data.pop('member')

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'cacheops',
     'corsheaders',
+    'django_filters',
 
     'base',
     'users',
