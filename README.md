@@ -32,7 +32,7 @@ Docker Engine:
 
 Docker Compose:
 
-    curl -L https://github.com/docker/compose/releases/download/1.12.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    curl -L https://github.com/docker/compose/releases/download/1.13.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
 
 Apply executable permissions to docker-compose binary:
 
@@ -111,6 +111,8 @@ Modify environment variables located in `env` file with your local settings. You
 
 A volume mount is used to persist files used by docker containers. By default, `docker-compose.yml` uses the `/workspaces` directory. You can either add that directory or change `docker-compose.yml` to use another one.
 
+### Launch Stack
+
 Use the following command to launch the full stack with docker compose (-d for detached mode):
 
     sudo docker-compose up -d
@@ -143,6 +145,65 @@ Access API docs page and login:
 
 > You may have to explicitly pull images, even though they are using the latest tag.
 
+### Re Launch Stack after Code Update
+
+Code updates are frequent and may require you to re launch stack. These steps should allow you to relaunch a development stack using updated code base:
+
+1. Navigate into repo and pull latest commit:
+
+    cd app-backend
+    git pull origin master
+
+2. Stop all running containers:
+
+    docker-compose stop
+
+3. Verify docker service settings:
+
+    systemctl status docker
+
+If `-H fd:// -H tcp://0.0.0.0:2375` appears, skip step for and move to step 7. Otherwise go to step 4.
+
+4. Edit `docker.service` file:
+
+    sudo nano /lib/systemd/system/docker.service
+
+ Add -H tcp://0.0.0.0:2375 **after** -H fd://
+
+5. Reload daemon service:
+
+    sudo systemctl daemon-reload
+
+6. Restart docker deamon:
+
+    sudo systemctl restart docker
+
+7. Re build images:
+
+    docker-compose build
+
+8. Launch docker stack:
+
+    docker-compose up -d
+
+If you remove all containders with `docker-compose down` or `docker rm -f $(docker ps -a -q)`, then
+you will need to recreate your super user and fetch static assets:
+
+    sudo docker-compose exec api /srv/env/bin/python manage.py createsuperuser
+    sudo docker-compose exec api /srv/env/bin/python manage.py collectstatic
+
+> It may be necessary to pull new version of an image not managed by app-backend repo, such
+as `3blades/openresty`. In that case, make sure you have the latest versions of your images by pulling
+them with latest tag, such as `docker pull image 3blades/openresty:latest`.
+
+### Additional Configurations for MAC OSX Users
+
+You may have to add an additional IP address to your `lo0` interface:
+
+    sudo ifconfig lo0 alias 10.200.10.1/24
+
+Make sure your service is listening on `0.0.0.0` (not 127.0.0.1) and change `DOCKER_HOST`
+env var to use this IP Address.
 
 ## Dev Setup with Django on Host
 
