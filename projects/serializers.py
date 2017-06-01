@@ -74,12 +74,15 @@ class FileSerializer(serializers.ModelSerializer):
 
 class CollaboratorSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
     member = serializers.CharField(write_only=True)
     permissions = serializers.MultipleChoiceField(choices=Project._meta.permissions)
 
     class Meta:
         model = Collaborator
-        fields = ('id', 'owner', 'joined', 'email', 'member', 'permissions')
+        fields = ('id', 'owner', 'joined', 'username', 'email', 'first_name', 'last_name', 'member', 'permissions')
 
     def create(self, validated_data):
         permissions = validated_data.pop('permissions', [])

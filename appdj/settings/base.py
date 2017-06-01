@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'cacheops',
     'corsheaders',
     'guardian',
+    'django_filters',
 
     'base',
     'users',
