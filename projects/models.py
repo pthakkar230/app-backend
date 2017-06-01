@@ -25,6 +25,12 @@ class Project(models.Model):
 
     objects = ProjectQuerySet.as_manager()
 
+    class Meta:
+        permissions = (
+            ('write_project', "Write project"),
+            ('read_project', "Read project"),
+        )
+
     def __str__(self):
         return self.name
 

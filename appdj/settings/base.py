@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'cacheops',
     'corsheaders',
+    'guardian',
 
     'base',
     'users',
@@ -107,6 +108,7 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',
     'social_core.backends.slack.SlackOAuth2',
     'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
 )
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_CLIENT_ID', '')
@@ -284,6 +286,7 @@ MIGRATION_MODULES = {
     'django_celery_results': 'appdj.migrations.django_celery_results',
     'oauth2_provider': 'appdj.migrations.oauth2_provider',
     'social_django': 'appdj.migrations.social_django',
+    'guardian': 'appdj.migrations.guardian',
 }
 
 ABSOLUTE_URL_OVERRIDES = {
