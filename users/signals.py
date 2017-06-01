@@ -15,12 +15,6 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=get_user_model())
-def create_user_token(sender, instance, created, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
-
-
-@receiver(post_save, sender=get_user_model())
 def create_user_ssh_key(sender, instance, created, **kwargs):
     if created:
         create_ssh_key(instance)
