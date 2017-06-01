@@ -35,6 +35,16 @@ class CustomerTest(APITestCase):
             stripe_obj = stripe.Customer.retrieve(customer.stripe_id)
             stripe_obj.delete()
 
+    def test_user_first_login_creates_customer(self):
+        self.client.credentials()
+        user = UserFactory(password="foo")
+        self.client.login(username=user.username,
+                          password="foo")
+
+        customer = Customer.objects.filter(user=user)
+        # There should be *exactly* one customer for each user
+        self.assertEqual(customer.count(), 1)
+
     def test_create_customer(self):
         url = reverse("customer-list", kwargs={'namespace': self.user.username})
         data = {'user': self.user.pk}
@@ -182,6 +192,46 @@ class PlanTest(APITestCase):
 
         post_del_plan_count = Plan.objects.count()
         self.assertEqual(post_del_plan_count, pre_del_plan_count)
+
+    def test_non_staff_user_cannot_create_plan(self):
+        self.user.is_staff = False
+        self.user.save()
+        url = reverse("plan-list", kwargs={'namespace': self.user.username})
+        data = create_plan_dict()
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.user.is_staff = True
+        self.user.save()
+
+    def test_non_staff_user_cannot_update_plan(self):
+        plan = self._create_plan_in_stripe()
+        self.plans_to_delete = [plan]
+        self.user.is_staff = False
+        self.user.save()
+        url = reverse("plan-detail", kwargs={'namespace': self.user.username,
+                                             'pk': plan.pk})
+        data = {'name': "Foo"}
+        response = self.client.patch(url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.user.is_staff = True
+        self.user.save()
+
+    def test_non_staff_user_cannot_delete_plan(self):
+        plan = self._create_plan_in_stripe()
+        self.plans_to_delete.append(plan)
+        self.user.is_staff = False
+        self.user.save()
+        url = reverse("plan-detail", kwargs={'namespace': self.user.username,
+                                             'pk': plan.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        plan_reloaded = Plan.objects.filter(pk=plan.pk).first()
+        self.assertIsNotNone(plan_reloaded)
+
+        self.user.is_staff = True
+        self.user.save()
 
 
 class CardTest(APITestCase):

@@ -95,8 +95,11 @@ def create_subscription_in_stripe(validated_data, user=None):
         customer = user.customer
 
     plan_id = validated_data.get("plan")
-    plan = Plan.objects.get(pk=plan_id)
-    log.debug(("PLAN", plan))
+
+    if isinstance(plan_id, Plan):
+        plan = plan_id
+    else:
+        plan = Plan.objects.get(pk=plan_id)
 
     stripe_response = stripe.Subscription.create(customer=customer.stripe_id,
                                                  plan=plan.stripe_id)

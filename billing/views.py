@@ -5,6 +5,7 @@ from datetime import datetime
 from django.utils import timezone
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import api_view
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
 from base.views import NamespaceMixin
@@ -74,9 +75,26 @@ class CardViewSet(mixins.CreateModelMixin,
         return Response(data=data, status=status.HTTP_204_NO_CONTENT)
 
 
+class IsAdminUser(BasePermission):
+    def has_permission(self, request, view):
+        permission = False
+
+        if request.user.is_authenticated:
+            if request.method != "GET":
+                # Authenticated, and method is modifying records in some way.
+                # Must be staff
+                permission = request.user.is_staff
+            else:
+                # Authenticated, and method is get
+                permission = True
+
+        return permission
+
+
 class PlanViewSet(viewsets.ModelViewSet):
     queryset = Plan.objects.all()
     serializer_class = PlanSerializer
+    permission_classes = (IsAdminUser,)
 
     def destroy(self, request, *args, **kwargs):
         instance = Plan.objects.get(pk=kwargs.get('pk'))
@@ -121,6 +139,7 @@ def no_subscription(request, *args, **kwargs):
     return Response(status=status.HTTP_402_PAYMENT_REQUIRED)
 
 
-class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
+class InvoiceViewSet(NamespaceMixin,
+                     viewsets.ReadOnlyModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer

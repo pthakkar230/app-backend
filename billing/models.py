@@ -135,8 +135,6 @@ class Plan(StripeModel):
 
 class SubscriptionQuerySet(models.QuerySet):
     def namespace(self, namespace):
-        import logging
-        log = logging.getLogger('billing')
         return self.filter(customer__user=namespace.object)
 
 
@@ -170,6 +168,11 @@ class Subscription(StripeModel):
     objects = SubscriptionQuerySet.as_manager()
 
 
+class InvoiceQuerySet(models.QuerySet):
+    def namespace(self, namespace):
+        return self.filter(customer__user=namespace.object)
+
+
 class Invoice(StripeModel):
     customer = models.ForeignKey(Customer)
     subscription = models.ForeignKey(Subscription, null=True, on_delete=models.CASCADE)
@@ -191,6 +194,8 @@ class Invoice(StripeModel):
     subtotal = models.IntegerField()
     tax = models.IntegerField(null=True)
     total = models.IntegerField()
+
+    objects = InvoiceQuerySet.as_manager()
 
 
 class InvoiceItem(StripeModel):
