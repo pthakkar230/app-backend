@@ -157,6 +157,15 @@ class SchemaGenerator(RestSchemaGenerator):
                     name=field.field_name,
                     reference=reference
                 ))
+            if isinstance(field, serializers.MultipleChoiceField):
+                description = force_text(field.help_text) if field.help_text else ''
+                properties.append(Property(
+                    name=field.field_name,
+                    type=types_lookup[field],
+                    description=description,
+                    items='string',
+                    enum=list(field.choices.keys())
+                ))
             else:
                 description = force_text(field.help_text) if field.help_text else ''
                 properties.append(Property(

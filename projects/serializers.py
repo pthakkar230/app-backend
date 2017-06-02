@@ -85,7 +85,7 @@ class CollaboratorSerializer(serializers.ModelSerializer):
         fields = ('id', 'owner', 'joined', 'username', 'email', 'first_name', 'last_name', 'member', 'permissions')
 
     def create(self, validated_data):
-        permissions = validated_data.pop('permissions', [])
+        permissions = validated_data.pop('permissions', ['read_project'])
         member = validated_data.pop('member')
         project_id = self.context['view'].kwargs['project_pk']
         project = Project.objects.get(pk=project_id)

@@ -1,11 +1,12 @@
 import factory
 from django.db.models.signals import post_save
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 
 from ..models import UserProfile
 from ..signals import create_user_ssh_key
+
+User = get_user_model()
 
 
 class UserProfileFactory(factory.django.DjangoModelFactory):
@@ -15,7 +16,7 @@ class UserProfileFactory(factory.django.DjangoModelFactory):
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = settings.AUTH_USER_MODEL
+        model = User
         django_get_or_create = ('username', 'email')
 
     username = factory.Sequence(lambda o: 'user{}'.format(o))
@@ -24,8 +25,8 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     @classmethod
     def _generate(cls, create, attrs):
-        post_save.disconnect(create_user_ssh_key, get_user_model())
+        post_save.disconnect(create_user_ssh_key, User)
         user = super()._generate(create, attrs)
-        post_save.connect(create_user_ssh_key, get_user_model())
         Token.objects.create(user=user)
+        post_save.connect(create_user_ssh_key, User)
         return user

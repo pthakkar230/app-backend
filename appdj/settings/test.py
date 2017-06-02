@@ -39,3 +39,4 @@ INSTALLED_APPS += (
 #    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 #    'base.middleware.NamespaceMiddleware',
 #]
+ANONYMOUS_USER_NAME = None
