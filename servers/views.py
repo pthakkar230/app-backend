@@ -4,17 +4,20 @@ from rest_framework import status, views, viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from base.views import ProjectMixin, UUIDRegexMixin, ServerMixin
 from projects.models import Project
+from projects.permissions import ProjectChildPermission
 from .tasks import start_server, stop_server, terminate_server
+from .permissions import ServerChildPermission, ServerActionPermission
 from . import serializers, models
 
 
 class ServerViewSet(viewsets.ModelViewSet):
     queryset = models.Server.objects.all()
     serializer_class = serializers.ServerSerializer
+    permission_classes = (IsAuthenticated, ProjectChildPermission)
     filter_fields = ("name",)
 
     def get_queryset(self):
@@ -22,6 +25,7 @@ class ServerViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['post'])
+@permission_classes([IsAuthenticated, ServerActionPermission])
 def start(request, project_pk, pk):
     start_server.apply_async(
         args=[pk],
@@ -31,6 +35,7 @@ def start(request, project_pk, pk):
 
 
 @api_view(['post'])
+@permission_classes([IsAuthenticated, ServerActionPermission])
 def stop(request, *args, **kwargs):
     stop_server.apply_async(
         args=[kwargs.get('pk')],
@@ -40,6 +45,7 @@ def stop(request, *args, **kwargs):
 
 
 @api_view(['post'])
+@permission_classes([IsAuthenticated, ServerActionPermission])
 def terminate(request, *args, **kwargs):
     terminate_server.apply_async(
         args=[kwargs.get('pk')],
@@ -51,6 +57,7 @@ def terminate(request, *args, **kwargs):
 class ServerRunStatisticsViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):
     queryset = models.ServerRunStatistics.objects.all()
     serializer_class = serializers.ServerRunStatisticsSerializer
+    permission_classes = (IsAuthenticated, ServerChildPermission)
 
     def list(self, request, *args, **kwargs):
         obj = self.queryset.filter(server_id=kwargs.get('server_pk')).aggregate(
@@ -66,6 +73,7 @@ class ServerRunStatisticsViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSe
 class ServerStatisticsViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):
     queryset = models.ServerStatistics.objects.all()
     serializer_class = serializers.ServerStatisticsSerializer
+    permission_classes = (IsAuthenticated, ServerChildPermission)
 
     def list(self, request, *args, **kwargs):
         obj = self.queryset.filter(server_id=kwargs.get('server_pk')).aggregate(
@@ -80,6 +88,7 @@ class ServerStatisticsViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):
 class SshTunnelViewSet(ProjectMixin, ServerMixin, viewsets.ModelViewSet):
     queryset = models.SshTunnel.objects.all()
     serializer_class = serializers.SshTunnelSerializer
+    permission_classes = (IsAuthenticated, ServerChildPermission)
 
 
 class EnvironmentResourceViewSet(UUIDRegexMixin, viewsets.ModelViewSet):

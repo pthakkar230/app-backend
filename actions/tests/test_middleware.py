@@ -4,6 +4,7 @@ from celery.signals import task_postrun
 from django.core.handlers.base import BaseHandler
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import APIRequestFactory
 
@@ -79,6 +80,7 @@ class ActionMiddlewareFunctionalTest(TestCase):
     def test_post_cancellable(self):
         task_postrun.disconnect(set_action_state)
         server = ServerFactory()
+        assign_perm('write_project', self.user, server.project)
         url = reverse('server-start', kwargs={
             'namespace': self.user.username,
             'project_pk': str(server.project.pk),

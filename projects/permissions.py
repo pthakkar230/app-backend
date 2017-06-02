@@ -4,10 +4,10 @@ from rest_framework import permissions
 def has_project_permission(request, project):
     if project.private is False and request.method == 'GET':
         return True
-    if not request.user.has_perm('read_project', project) and request.method == 'GET':
-        return False
-    if not request.user.has_perm('write_project', project) and request.method != 'GET':
-        return False
+    if request.method == 'GET':
+        return request.user.has_perm('read_project', project)
+    else:
+        return request.user.has_perm('write_project', project)
     return True
 
 
