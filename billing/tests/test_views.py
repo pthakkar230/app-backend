@@ -15,8 +15,10 @@ log = logging.getLogger('billing')
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-def create_plan_dict():
+def create_plan_dict(trial_period=None):
     obj_dict = vars(PlanFactory.build())
+    if trial_period is not None:
+        obj_dict['trial_period_days'] = trial_period
     data_dict = {key: obj_dict[key] for key in obj_dict
                  if key in [f.name for f in Plan._meta.get_fields()] and key not in ["stripe_id", "created",
                                                                                      "id", "metadata"]}
@@ -321,9 +323,9 @@ class SubscriptionTest(APITestCase):
             stripe_obj = stripe.Plan.retrieve(plan.stripe_id)
             stripe_obj.delete()
 
-    def _create_plan_in_stripe(self):
+    def _create_plan_in_stripe(self, trial_period=None):
         url = reverse("plan-list", kwargs={'namespace': self.user.username})
-        plan_data = create_plan_dict()
+        plan_data = create_plan_dict(trial_period)
         self.client.post(url, plan_data)
         plan = Plan.objects.get()
         self.plans_to_delete.append(plan)
@@ -339,7 +341,7 @@ class SubscriptionTest(APITestCase):
         return subscription
 
     def test_subscription_create(self):
-        plan = self._create_plan_in_stripe()
+        plan = self._create_plan_in_stripe(trial_period=7)
         url = reverse("subscription-list", kwargs={'namespace': self.user.username})
         data = {'plan': plan.pk}
         response = self.client.post(url, data)
