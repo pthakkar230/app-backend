@@ -48,7 +48,8 @@ class Customer(StripeModel):
     last_invoice_sync = models.DateTimeField(null=True)
 
     def has_active_subscription(self):
-        has_sub = self.subscription_set.filter(ended_at__isnull=True).exists()
+        has_sub = self.subscription_set.filter(status__in=[Subscription.TRIAL,
+                                                           Subscription.ACTIVE]).exists()
         return has_sub
 
 

@@ -1,5 +1,6 @@
 from django.shortcuts import redirect
 from django.urls import resolve
+from django.conf import settings
 from billing.models import Customer
 
 
@@ -10,8 +11,7 @@ class SubscriptionMiddleware(object):
     def __call__(self, request):
         try:
             url_name = resolve(request.path).url_name
-            # TODO: Exempt certain urls via settings
-            if url_name != "subscription-required":
+            if url_name not in settings.SUBSCRIPTION_EXEMPT_URLS:
                 user = request.user
                 if user.is_authenticated and not user.is_staff:
                     customer = user.customer

@@ -313,3 +313,14 @@ SOCIAL_AUTH_SLACK_SECRET = os.environ.get('SLACK_SECRET')
 CORS_ORIGIN_ALLOW_ALL = True
 
 LOGGING = TBS_LOGGING
+
+# A list of url *names* that do not require a subscription to access.
+SUBSCRIPTION_EXEMPT_URLS = [LOGIN_URL,
+                            "subscription-required"]
+SUBSCRIPTION_EXEMPT_URLS += [view + "-list" for view in ["customer", "card",
+                                                         "plan", "subscription",
+                                                         "invoice"]]
+
+SUBSCRIPTION_EXEMPT_URLS += [view + "-detail" for view in ["customer", "card",
+                                                           "plan", "subscription",
+                                                           "invoice"]]

@@ -42,6 +42,7 @@ class CustomerTest(APITestCase):
                           password="foo")
 
         customer = Customer.objects.filter(user=user)
+        self.customers_to_delete.append(customer.first())
         # There should be *exactly* one customer for each user
         self.assertEqual(customer.count(), 1)
 
@@ -115,8 +116,7 @@ class CustomerTest(APITestCase):
         self.user.save()
         customer = create_stripe_customer_from_user(self.user)
         self.customers_to_delete = [customer]
-        url = reverse("customer-detail", kwargs={'namespace': self.user.username,
-                                                 'pk': customer.pk})
+        url = reverse("project-list", kwargs={'namespace': self.user.username})
         response = self.client.get(url, follow=True)
         self.assertEqual(response.status_code, status.HTTP_402_PAYMENT_REQUIRED)
         self.user.is_staff = True
@@ -376,4 +376,3 @@ class SubscriptionTest(APITestCase):
         self.assertEqual(sub_reloaded.status, Subscription.CANCELED)
         self.assertIsNotNone(sub_reloaded.canceled_at)
         self.assertIsNotNone(sub_reloaded.ended_at)
-

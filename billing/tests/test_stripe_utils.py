@@ -31,8 +31,13 @@ class TestStripeUtils(TestCase):
             stripe_obj = stripe.Customer.retrieve(customer.stripe_id)
             stripe_obj.delete()
 
+        for plan in self.plans_to_delete:
+            stripe_obj = stripe.Plan.retrieve(plan.stripe_id)
+            stripe_obj.delete()
+
     def test_create_stripe_customer_from_user(self):
         customer = stripe_utils.create_stripe_customer_from_user(self.user)
+        self.customers_to_delete.append(customer)
         self.assertEqual(Customer.objects.count(), 1)
         self.assertEqual(customer.user, self.user)
 
@@ -47,6 +52,7 @@ class TestStripeUtils(TestCase):
         plan_data = create_plan_dict()
         plan_data['trial_period_days'] = 0
         plan = stripe_utils.create_plan_in_stripe(plan_data)
+        self.plans_to_delete.append(plan)
 
         sub_data = {'customer': customer,
                     'plan': plan}

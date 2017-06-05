@@ -127,7 +127,7 @@ def create_card_in_stripe(validated_data, user=None):
         stripe_resp = stripe_cust.sources.create(source=token)
 
     stripe_resp['customer'] = customer.stripe_id
-    # TODO: Save address & related info even in tokenized case
+
     converted_data = convert_stripe_object(Card, stripe_resp)
     return Card.objects.create(**converted_data)
 
