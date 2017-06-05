@@ -8,7 +8,11 @@ from django.conf import settings
 from django.core.validators import RegexValidator
 from django.utils.encoding import force_bytes, force_text
 from django_redis.serializers.base import BaseSerializer
+from rest_framework_jwt.settings import api_settings
 from hashids import Hashids
+
+jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
 def encode_id(value, salt=settings.SECRET_KEY):
@@ -74,4 +78,10 @@ def copy_model(model):
     new_object.pk = None
     return new_object
 
+
 alphanumeric = RegexValidator(r'^[0-9a-zA-Z-]*$', "You can use only alphanumeric characters.")
+
+
+def create_jwt_token(user):
+    payload = jwt_payload_handler(user)
+    return jwt_encode_handler(payload)

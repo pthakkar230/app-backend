@@ -12,6 +12,8 @@ from django.utils.functional import cached_property
 from docker import from_env
 from docker.errors import APIError
 
+from utils import create_jwt_token
+
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +89,9 @@ class DockerSpawner(ServerSpawner):
             raise  # this is part of celery task, we need to know if it fails
 
     def _get_cmd(self):
-        command = '''/runner -key={server.project.owner.auth_token.key} -ns={server.project.owner.username}
+        command = '''/runner -key={token} -ns={server.project.owner.username}
         -projectID={server.project.pk} -serverID={server.pk} -root={domain}'''.format(
+            token=create_jwt_token(self.server.project.owner),
             server=self.server,
             domain=Site.objects.get_current()
         )
