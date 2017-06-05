@@ -1,6 +1,5 @@
 import logging
 import stripe
-from datetime import datetime
 
 from django.utils import timezone
 from rest_framework import viewsets, status, mixins
@@ -125,8 +124,8 @@ class SubscriptionViewSet(NamespaceMixin,
         stripe_obj = stripe.Subscription.retrieve(instance.stripe_id)
 
         stripe_response = stripe_obj.delete()
-        instance.canceled_at = timezone.make_aware(datetime.now())
-        instance.ended_at = timezone.make_aware(datetime.now())
+        instance.canceled_at = timezone.now()
+        instance.ended_at = timezone.now()
         instance.status = stripe_response['status']
         instance.save()
 
