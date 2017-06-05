@@ -12,12 +12,14 @@ from .models import Project, File, Collaborator, SyncedResource
 
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.CharField(source='get_owner_name', read_only=True)
+    collaborators = serializers.StringRelatedField(many=True, required=False)
 
     class Meta:
         model = Project
-        fields = ('id', 'name', 'description', 'private', 'last_updated', 'owner')
+        fields = ('id', 'name', 'description', 'private', 'last_updated', 'owner', 'collaborators')
 
     def create(self, validated_data):
+        collaborators = validated_data.pop('collaborators', [])
         project = super().create(validated_data)
         request = self.context['request']
         Collaborator.objects.create(project=project, owner=True, user=request.user)
@@ -70,11 +72,14 @@ class FileSerializer(serializers.ModelSerializer):
 
 class CollaboratorSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
     member = serializers.CharField(write_only=True)
 
     class Meta:
         model = Collaborator
-        fields = ('id', 'owner', 'joined', 'email', 'member')
+        fields = ('id', 'owner', 'joined', 'username', 'email', 'first_name', 'last_name', 'member')
 
     def create(self, validated_data):
         member = validated_data.pop('member')

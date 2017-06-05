@@ -105,11 +105,9 @@ class IsAllowed(views.APIView):
 def server_internal_details(request, server_pk):
     server = get_object_or_404(models.Server, pk=server_pk)
     data = {'server': '', 'container_name': ''}
-    if server.status == server.RUNNING:
-        server_ip = server.get_private_ip()
-        data = {
-            'server': {service: '%s:%s' % (server_ip, port) for service, port in server.config.get('ports', {}).items()},
-            'container_name': (server.container_name or '')
-        }
-
+    server_ip = server.get_private_ip()
+    data = {
+        'server': {service: '%s:%s' % (server_ip, port) for service, port in server.config.get('ports', {}).items()},
+        'container_name': (server.container_name or '')
+    }
     return Response(data)
