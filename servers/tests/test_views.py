@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from guardian.shortcuts import assign_perm
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -48,6 +49,7 @@ class ServerTest(APITestCase):
 
     def test_server_details(self):
         server = ServerFactory(project=self.project)
+        assign_perm('read_project', self.user, self.project)
         self.url_kwargs.update({
             'pk': str(server.pk)
         })
@@ -57,6 +59,7 @@ class ServerTest(APITestCase):
 
     def test_server_update(self):
         server = ServerFactory(project=self.project)
+        assign_perm('write_project', self.user, self.project)
         self.url_kwargs.update({
             'pk': str(server.pk)
         })
@@ -73,6 +76,7 @@ class ServerTest(APITestCase):
 
     def test_server_partial_update(self):
         server = ServerFactory(project=self.project)
+        assign_perm('write_project', self.user, self.project)
         self.url_kwargs.update({
             'pk': str(server.pk)
         })
@@ -85,6 +89,7 @@ class ServerTest(APITestCase):
 
     def test_server_delete(self):
         server = ServerFactory(project=self.project)
+        assign_perm('write_project', self.user, self.project)
         self.url_kwargs.update({
             'pk': str(server.pk)
         })
@@ -108,6 +113,18 @@ class ServerTest(APITestCase):
             'container_name': server.container_name
         }
         self.assertDictEqual(expected, response.data)
+
+    def test_server_stop_perm(self):
+        server = ServerFactory(project=self.project)
+        self.url_kwargs.update({
+            'pk': str(server.pk)
+        })
+        url = reverse('server-stop', kwargs=self.url_kwargs)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        assign_perm('write_project', self.user, self.project)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
 class ServerRunStatisticsTestCase(APITestCase):
