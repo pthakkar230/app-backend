@@ -29,6 +29,7 @@ from users import views as user_views
 from infrastructure import views as infra_views
 from jwt_auth import views as jwt_views
 from triggers import views as trigger_views
+from billing import views as billing_views
 
 router = routers.DefaultRouter()
 
@@ -36,6 +37,11 @@ router.register(r'servers/options/resources', servers_views.EnvironmentResourceV
 router.register(r'users', user_views.UserViewSet)
 router.register(r'hosts', infra_views.DockerHostViewSet)
 router.register(r'triggers', trigger_views.TriggerViewSet)
+router.register(r'billing/customers', billing_views.CustomerViewSet)
+router.register(r'billing/cards', billing_views.CardViewSet)
+router.register(r'billing/plans', billing_views.PlanViewSet)
+router.register(r'billing/subscriptions', billing_views.SubscriptionViewSet)
+router.register(r'billing/invoices', billing_views.InvoiceViewSet)
 user_router = routers.NestedSimpleRouter(router, r'users', lookup='user')
 user_router.register(r'emails', user_views.EmailViewSet)
 user_router.register(r'integrations', user_views.IntegrationViewSet)
@@ -91,6 +97,8 @@ urlpatterns = [
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/servers/(?P<pk>[^/.]+)/terminate/$',
         servers_views.terminate, name='server-terminate'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'(?P<namespace>[\w-]+)/billing/subscription_required/$', billing_views.no_subscription,
+        name="subscription-required")
 ]
 
 

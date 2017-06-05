@@ -24,6 +24,8 @@ from appdj.settings.tbslog import TBS_LOGGING
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'test')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', "test secret key")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
@@ -75,6 +77,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'base.middleware.NamespaceMiddleware',
+    'billing.middleware.SubscriptionMiddleware'
 ]
 
 ROOT_URLCONF = 'appdj.urls'
@@ -313,3 +316,14 @@ SOCIAL_AUTH_SLACK_SECRET = os.environ.get('SLACK_SECRET')
 CORS_ORIGIN_ALLOW_ALL = True
 
 LOGGING = TBS_LOGGING
+
+# A list of url *names* that do not require a subscription to access.
+SUBSCRIPTION_EXEMPT_URLS = [LOGIN_URL,
+                            "subscription-required"]
+SUBSCRIPTION_EXEMPT_URLS += [view + "-list" for view in ["customer", "card",
+                                                         "plan", "subscription",
+                                                         "invoice"]]
+
+SUBSCRIPTION_EXEMPT_URLS += [view + "-detail" for view in ["customer", "card",
+                                                           "plan", "subscription",
+                                                           "invoice"]]
