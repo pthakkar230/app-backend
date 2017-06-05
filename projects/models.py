@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.urls import reverse
+from guardian.shortcuts import get_perms
 from social_django.models import UserSocialAuth
 
 from base.namespace import Namespace
@@ -24,6 +25,12 @@ class Project(models.Model):
     integrations = models.ManyToManyField(UserSocialAuth, through='SyncedResource', related_name='projects')
 
     objects = ProjectQuerySet.as_manager()
+
+    class Meta:
+        permissions = (
+            ('write_project', "Write project"),
+            ('read_project', "Read project"),
+        )
 
     def __str__(self):
         return self.name
@@ -63,6 +70,11 @@ class Collaborator(models.Model):
 
     def get_absolute_url(self, namespace):
         return ""
+
+    @property
+    def permissions(self):
+        project_perms = dict(Project._meta.permissions)
+        return [perm for perm in get_perms(self.user, self.project) if perm in project_perms]
 
 
 class FileQuerySet(models.QuerySet):

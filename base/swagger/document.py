@@ -9,8 +9,8 @@ from coreapi.compat import string_types
 Field = namedtuple('Field', ['name', 'reference', 'required', 'location', 'type', 'description', 'example'])
 Field.__new__.__defaults__ = (False, None, '', '', '', None)
 
-Property = namedtuple('Property', ['name', 'reference', 'type', 'description', 'example', 'items', 'schema'])
-Property.__new__.__defaults__ = (False, None, '', '', None, None)
+Property = namedtuple('Property', ['name', 'reference', 'type', 'description', 'example', 'items', 'schema', 'enum'])
+Property.__new__.__defaults__ = (False, None, '', '', None, None, [])
 
 
 class Document(CoreDocument):
