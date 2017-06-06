@@ -44,6 +44,22 @@ class ProjectTest(ProjectTestMixin, APITestCase):
         self.assertEqual(Project.objects.count(), 1)
         self.assertEqual(Project.objects.get().name, data['name'])
 
+    def test_create_project_with_different_user(self):
+        staff_user = UserFactory(is_staff=True)
+        token_header = 'Token {}'.format(staff_user.auth_token.key)
+        client = self.client_class(HTTP_AUTHORIZATION=token_header)
+        url = reverse('project-list', kwargs={'namespace': self.user.username})
+        data = dict(
+            name='Test1',
+            description='Test description',
+        )
+        response = client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Project.objects.count(), 1)
+        project = Project.objects.get()
+        self.assertEqual(project.name, data['name'])
+        self.assertEqual(project.get_owner_name(), self.user.username)
+
     def test_list_projects(self):
         projects_count = 4
         CollaboratorFactory.create_batch(4, user=self.user)
