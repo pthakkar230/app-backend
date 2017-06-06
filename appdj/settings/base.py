@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'guardian',
     'django_filters',
+    'haystack',
 
     'base',
     'users',
@@ -327,3 +328,11 @@ SUBSCRIPTION_EXEMPT_URLS += [view + "-list" for view in ["customer", "card",
 SUBSCRIPTION_EXEMPT_URLS += [view + "-detail" for view in ["customer", "card",
                                                            "plan", "subscription",
                                                            "invoice"]]
+
+HAYSTACK_CONNECTIONS = {
+    "default": {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': os.environ.get("ELASTICSEARCH_URL", "http://search:9200/"),
+        'INDEX_NAME': '3blades',
+    }
+}

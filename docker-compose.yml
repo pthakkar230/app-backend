@@ -11,6 +11,7 @@ services:
       - db
       - cache
       - broker
+      - search
   celery:
     build: .
     command: /srv/env/bin/celery -A appdj worker -l info
@@ -22,6 +23,7 @@ services:
       - db
       - cache
       - broker
+      - search
     entrypoint: ''
   db:
     image: postgres:alpine
@@ -31,6 +33,10 @@ services:
     image: rabbitmq:alpine
     ports:
       - "5672:5672"
+  search:
+    image: elasticsearch:alpine
+    ports:
+      - "9200:9200"
   cache:
     image: redis:alpine
     ports:
