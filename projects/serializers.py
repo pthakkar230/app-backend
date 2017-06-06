@@ -23,7 +23,11 @@ class ProjectSerializer(serializers.ModelSerializer):
         collaborators = validated_data.pop('collaborators', [])
         project = super().create(validated_data)
         request = self.context['request']
-        Collaborator.objects.create(project=project, owner=True, user=request.user)
+        if request.user.is_staff:
+            user = request.namespace.object
+        else:
+            user = request.user
+        Collaborator.objects.create(project=project, owner=True, user=user)
         assign_perm('write_project', request.user, project)
         Path(settings.RESOURCE_DIR, project.get_owner_name(), str(project.pk)).mkdir(parents=True, exist_ok=True)
         return project
