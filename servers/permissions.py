@@ -11,6 +11,8 @@ class ServerChildPermission(permissions.BasePermission):
 
 class ServerActionPermission(permissions.BasePermission):
     def has_permission(self, request, view):
+        if not view.kwargs:
+            return True
         project = Project.objects.filter(pk=view.kwargs.get('project_pk')).first()
         if project is None:
             return False
