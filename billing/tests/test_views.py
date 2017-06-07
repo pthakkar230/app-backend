@@ -124,6 +124,32 @@ class CustomerTest(APITestCase):
         self.user.is_staff = True
         self.user.save()
 
+    def test_updating_customer_default_source(self):
+        customer = create_stripe_customer_from_user(self.user)
+        url = reverse("card-list", kwargs={'namespace': self.user.username})
+        data = {'user': str(self.user.pk),
+                'token': 'tok_visa'}
+        self.client.post(url, data)
+
+        # Have to create two card because the first one automatically becomes the default in stripe
+        data['token'] = "tok_mastercard"
+        self.client.post(url, data)
+
+        brands = Card.objects.all().values_list("brand", flat=True)
+
+        url = reverse("customer-detail", kwargs={'namespace': self.user.username,
+                                                 'pk': customer.pk})
+        mastercard = Card.objects.get(brand="MasterCard")
+        data = {'default_source': str(mastercard.pk)}
+
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        customer_reloaded = Customer.objects.get(pk=customer.pk)
+        self.assertEqual(customer_reloaded.default_source, mastercard)
+
+        self.customers_to_delete.append(customer)
+
 
 class PlanTest(APITestCase):
     def setUp(self):
