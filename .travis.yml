@@ -34,13 +34,19 @@ before_install:
   - export REDIS_URL="redis://localhost:6379/0"
   - export DATABASE_URL="postgres://postgres:@localhost:5432/travis_ci_test"
 # command to install dependencies
+env:
+  - ES_VERSION=2.4.5 ES_DOWNLOAD_URL=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES_VERSION}.tar.gz
 install:
+  - wget ${ES_DOWNLOAD_URL}
+  - tar -xzf elasticsearch-${ES_VERSION}.tar.gz
+  - ./elasticsearch-${ES_VERSION}/bin/elasticsearch &
   - pip install -U pip setuptools wheel
   - pip install -r requirements/dev.txt
   - pip install codecov
 # command to run tests
 script:
   # run tests
+  - wget -q --waitretry=1 --retry-connrefused -T 10 -O - http://127.0.0.1:9200
   - coverage run --source='.' manage.py test && coverage report -m
 after_success:
   - bash <(curl -s https://codecov.io/bash)
