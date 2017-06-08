@@ -34,7 +34,7 @@ services:
     ports:
       - "5672:5672"
   search:
-    image: elasticsearch:alpine
+    image: elasticsearch:2-alpine
     ports:
       - "9200:9200"
   cache:

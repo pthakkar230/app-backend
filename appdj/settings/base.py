@@ -86,7 +86,7 @@ ROOT_URLCONF = 'appdj.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -331,8 +331,9 @@ SUBSCRIPTION_EXEMPT_URLS += [view + "-detail" for view in ["customer", "card",
 
 HAYSTACK_CONNECTIONS = {
     "default": {
-        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
         'URL': os.environ.get("ELASTICSEARCH_URL", "http://search:9200/"),
         'INDEX_NAME': '3blades',
     }
 }
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'

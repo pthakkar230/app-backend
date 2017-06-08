@@ -1,9 +1,11 @@
 from django.contrib.auth import get_user_model
+from drf_haystack.generics import HaystackGenericAPIView
 from social_django.models import UserSocialAuth
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404, CreateAPIView
+from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -19,11 +21,18 @@ User = get_user_model()
 class UserViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
     queryset = User.objects.filter(is_active=True).select_related('profile')
     serializer_class = UserSerializer
-    filter_fields = ('username', 'email')
 
     def perform_destroy(self, instance):
         instance.active = False
         instance.save()
+
+
+class UserSearchView(ListModelMixin, HaystackGenericAPIView):
+    serializer_class = UserSerializer
+    index_models = [User]
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 class RegisterView(CreateAPIView):
@@ -38,20 +47,20 @@ class RegisterView(CreateAPIView):
 
 @api_view(['GET'])
 def ssh_key(request, user_pk):
-    user = get_object_or_404(get_user_model(), pk=user_pk)
+    user = get_object_or_404(User, pk=user_pk)
     return Response(data={'key': user.profile.ssh_public_key()})
 
 
 @api_view(['POST'])
 def reset_ssh_key(request, user_pk):
-    user = get_object_or_404(get_user_model(), pk=user_pk)
+    user = get_object_or_404(User, pk=user_pk)
     create_ssh_key(user)
     return Response(data={'key': user.profile.ssh_public_key()})
 
 
 @api_view(['GET'])
 def api_key(request, user_pk):
-    user = get_object_or_404(get_user_model(), pk=user_pk)
+    user = get_object_or_404(User, pk=user_pk)
     return Response(data={'key': user.auth_token.key})
 
 

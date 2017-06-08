@@ -1,10 +1,16 @@
 from django.contrib.auth import get_user_model
+from django.utils import six
+from drf_haystack.serializers import HaystackSerializerMixin, HaystackSerializerMeta
 from rest_framework import serializers
 from rest_framework.authtoken.serializers import AuthTokenSerializer as RestAuthTokenSerializer
 from social_django.models import UserSocialAuth
 
 from base.views import RequestUserMixin
+from .search_indexes import UserIndex
 from .models import UserProfile, Email
+
+
+User = get_user_model()
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -13,18 +19,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('avatar_url', 'bio', 'url', 'location', 'company', 'timezone')
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(HaystackSerializerMixin, six.with_metaclass(HaystackSerializerMeta, serializers.ModelSerializer)):
     profile = UserProfileSerializer()
 
     class Meta:
-        model = get_user_model()
+        model = User
+        search_fields = ("text",)
+        index_classes = (UserIndex,)
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'password', 'profile')
         extra_kwargs = {'password': {'write_only': True}}
+        field_aliases = {"q": "text"}
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
         password = validated_data.pop('password')
-        user = get_user_model()(**validated_data)
+        user = User(**validated_data)
         user.set_password(password)
         user.save()
         profile = UserProfile(user=user, **profile_data)
