@@ -1,12 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.utils import six
-from drf_haystack.serializers import HaystackSerializerMixin, HaystackSerializerMeta
 from rest_framework import serializers
 from rest_framework.authtoken.serializers import AuthTokenSerializer as RestAuthTokenSerializer
 from social_django.models import UserSocialAuth
 
 from base.views import RequestUserMixin
-from .search_indexes import UserIndex
 from .models import UserProfile, Email
 
 
@@ -19,16 +16,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('avatar_url', 'bio', 'url', 'location', 'company', 'timezone')
 
 
-class UserSerializer(HaystackSerializerMixin, six.with_metaclass(HaystackSerializerMeta, serializers.ModelSerializer)):
+class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer()
 
     class Meta:
         model = User
-        search_fields = ("text",)
-        index_classes = (UserIndex,)
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'password', 'profile')
         extra_kwargs = {'password': {'write_only': True}}
-        field_aliases = {"q": "text"}
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
@@ -49,6 +43,11 @@ class UserSerializer(HaystackSerializerMixin, six.with_metaclass(HaystackSeriali
         if password is not None:
             instance.set_password(password)
         return super().update(instance, validated_data)
+    
+    def to_representation(self, instance):
+        if not isinstance(instance, User):
+            instance = instance.object
+        return super().to_representation(instance)
 
 
 class EmailSerializer(RequestUserMixin, serializers.ModelSerializer):

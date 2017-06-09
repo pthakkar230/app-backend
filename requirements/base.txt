@@ -39,4 +39,3 @@ django-guardian==1.4.8
 stripe==1.55.2
 django-haystack==2.6.1
 elasticsearch<3.0.0
-https://github.com/inonit/drf-haystack/archive/master.zip

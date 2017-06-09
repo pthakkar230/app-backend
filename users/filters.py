@@ -6,8 +6,8 @@ User = get_user_model()
 
 
 class UserSearchFilter(django_filters.FilterSet):
-    content = django_filters.CharFilter(name='q')
+    q = django_filters.CharFilter()
 
     class Meta:
         model = User
-        fields = ('content',)
+        fields = ('q',)

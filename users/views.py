@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from drf_haystack.generics import HaystackGenericAPIView
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from social_django.models import UserSocialAuth
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from base.views import UUIDRegexMixin
 from utils import create_ssh_key
 
+from .filters import UserSearchFilter
 from .models import Email
 from .serializers import UserSerializer, EmailSerializer, IntegrationSerializer, AuthTokenSerializer
 
@@ -27,12 +28,25 @@ class UserViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
         instance.save()
 
 
-class UserSearchView(ListModelMixin, HaystackGenericAPIView):
+class UserSearchView(ListModelMixin, viewsets.GenericViewSet):
     serializer_class = UserSerializer
-    index_models = [User]
+    filter_class = UserSearchFilter
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        qs = EmptySearchQuerySet()
+        if 'q' in self.request.GET:
+            qs = SearchQuerySet().filter(content=self.request.GET.get('q', ''))
+        return qs
 
 
 class RegisterView(CreateAPIView):
