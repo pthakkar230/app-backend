@@ -103,11 +103,18 @@ class CustomerSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         stripe_obj = stripe.Customer.retrieve(instance.stripe_id)
 
+        card = None
         for key in validated_data:
-            if key.lower() != "user":
+            if key.lower() == "default_source":
+                card = validated_data[key]
+                setattr(stripe_obj, key, card.stripe_id)
+
+            elif key.lower() != "user":
                 setattr(stripe_obj, key, validated_data[key])
 
         stripe_response = stripe_obj.save()
+        if card is not None:
+            stripe_response['default_source'] = card
         converted_data = convert_stripe_object(Customer, stripe_response)
 
         for key in converted_data:

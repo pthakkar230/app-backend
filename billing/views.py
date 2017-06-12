@@ -16,7 +16,9 @@ from billing.serializers import (PlanSerializer, CustomerSerializer, CardSeriali
 log = logging.getLogger('billing')
 
 
-class CustomerViewSet(viewsets.ModelViewSet):
+class CustomerViewSet(NamespaceMixin,
+                      viewsets.ModelViewSet):
+
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
 

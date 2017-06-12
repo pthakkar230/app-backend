@@ -60,12 +60,13 @@ class CustomerTest(APITestCase):
 
     def test_list_customers(self):
         customers_count = 4
-        customers = CustomerFactory.create_batch(customers_count)
+        _ = CustomerFactory.create_batch(customers_count)
+        my_customer = CustomerFactory(user=self.user)
         url = reverse("customer-list", kwargs={'namespace': self.user.username})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), customers_count)
-        # Feels like we need more assertions here...
+        # Making sure that only "my" customer can be viewed
+        self.assertEqual(len(response.data), 1)
 
     def test_customer_details(self):
         customer = CustomerFactory(user=self.user)
@@ -123,6 +124,32 @@ class CustomerTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_402_PAYMENT_REQUIRED)
         self.user.is_staff = True
         self.user.save()
+
+    def test_updating_customer_default_source(self):
+        customer = create_stripe_customer_from_user(self.user)
+        url = reverse("card-list", kwargs={'namespace': self.user.username})
+        data = {'user': str(self.user.pk),
+                'token': 'tok_visa'}
+        self.client.post(url, data)
+
+        # Have to create two card because the first one automatically becomes the default in stripe
+        data['token'] = "tok_mastercard"
+        self.client.post(url, data)
+
+        brands = Card.objects.all().values_list("brand", flat=True)
+
+        url = reverse("customer-detail", kwargs={'namespace': self.user.username,
+                                                 'pk': customer.pk})
+        mastercard = Card.objects.get(brand="MasterCard")
+        data = {'default_source': str(mastercard.pk)}
+
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        customer_reloaded = Customer.objects.get(pk=customer.pk)
+        self.assertEqual(customer_reloaded.default_source, mastercard)
+
+        self.customers_to_delete.append(customer)
 
 
 class PlanTest(APITestCase):

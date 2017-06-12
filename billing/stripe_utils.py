@@ -13,8 +13,33 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 log = logging.getLogger('billing')
 
 
-def convert_field_to_stripe(model, stripe_field, stripe_data):
+def handle_foreign_key_field(stripe_data, stripe_field, model_field):
+    init_value = stripe_data.get(stripe_field)
+    final_value = None
+    identifier = None
 
+    if init_value is not None:
+        if isinstance(init_value, dict):
+            identifier = init_value.get("id")
+
+        elif isinstance(init_value, model_field.related_model):
+            final_value = init_value
+
+        else:
+            identifier = init_value
+
+        if hasattr(model_field.related_model, "stripe_id"):
+            kwargs = {'stripe_id': identifier}
+        elif final_value is None:
+            kwargs = {'pk': identifier}
+
+        if final_value is None:
+            final_value = model_field.related_model.objects.filter(**kwargs).first()
+
+    return final_value
+
+
+def convert_field_to_stripe(model, stripe_field, stripe_data):
     field_name = "stripe_id" if stripe_field == "id" else stripe_field
     value = stripe_data.get(stripe_field)
 
@@ -32,17 +57,9 @@ def convert_field_to_stripe(model, stripe_field, stripe_data):
     if (model_field is not None and
         (model_field.is_relation and not model_field.many_to_many)):
 
-        if value is not None:
-            if isinstance(value, dict):
-                identifier = value.get("id")
-            else:
-                identifier = stripe_data.get(stripe_field)
-
-            if hasattr(model_field.related_model, "stripe_id"):
-                kwargs = {'stripe_id': identifier}
-            else:
-                kwargs = {'pk': identifier}
-            value = model_field.related_model.objects.filter(**kwargs).first()
+        value = handle_foreign_key_field(stripe_data,
+                                         stripe_field,
+                                         model_field)
 
     elif isinstance(model_field, models.DateTimeField):
         if value is not None:

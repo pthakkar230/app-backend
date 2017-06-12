@@ -21,7 +21,7 @@ class CustomerFactory(factory.django.DjangoModelFactory):
     account_balance = fuzzy.FuzzyInteger(low=-10000, high=10000)
     # For now
     currency = "usd"
-    default_source = fuzzy.FuzzyText()
+    default_source = None
 
 
 class PlanFactory(factory.django.DjangoModelFactory):

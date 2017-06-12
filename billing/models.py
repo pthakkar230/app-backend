@@ -39,13 +39,20 @@ class Event(StripeModel):
     event_type = models.CharField(max_length=255)
 
 
+class CustomerQuerySet(models.QuerySet):
+    def namespace(self, namespace):
+        return self.filter(user=namespace.object)
+
+
 class Customer(StripeModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL)
     # Should account_balance really be exposed?
     account_balance = models.IntegerField(default=0)
     currency = models.CharField(max_length=10, null=True)
-    default_source = models.TextField(null=True)
+    default_source = models.ForeignKey("Card", null=True, related_name="+", on_delete=models.CASCADE)
     last_invoice_sync = models.DateTimeField(null=True)
+
+    objects = CustomerQuerySet.as_manager()
 
     def has_active_subscription(self):
         has_sub = self.subscription_set.filter(status__in=[Subscription.TRIAL,
