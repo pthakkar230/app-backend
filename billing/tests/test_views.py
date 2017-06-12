@@ -60,12 +60,13 @@ class CustomerTest(APITestCase):
 
     def test_list_customers(self):
         customers_count = 4
-        customers = CustomerFactory.create_batch(customers_count)
+        _ = CustomerFactory.create_batch(customers_count)
+        my_customer = CustomerFactory(user=self.user)
         url = reverse("customer-list", kwargs={'namespace': self.user.username})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), customers_count)
-        # Feels like we need more assertions here...
+        # Making sure that only "my" customer can be viewed
+        self.assertEqual(len(response.data), 1)
 
     def test_customer_details(self):
         customer = CustomerFactory(user=self.user)
