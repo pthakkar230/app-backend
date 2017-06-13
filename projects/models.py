@@ -123,6 +123,21 @@ class File(models.Model):
         return super().delete(using, keep_parents)
 
 
+def user_project_directory_path(instance, filename):
+    return "{usr}/{proj}/{fname}".format(usr=instance.author.username,
+                                         proj=instance.project.pk,
+                                         fname=filename)
+
+
+class ProjectFile(models.Model):
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
+    project = models.ForeignKey(Project, related_name="project_files")
+    file = models.FileField(upload_to=user_project_directory_path)
+    public = models.BooleanField(default=False)
+
+    objects = FileQuerySet.as_manager()
+
+
 class SyncedResourceQuerySet(models.QuerySet):
     def namespace(self, namespace):
         return self.filter(project__collaborator__user=namespace.object)

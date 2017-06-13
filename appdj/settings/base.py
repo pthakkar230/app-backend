@@ -327,3 +327,4 @@ SUBSCRIPTION_EXEMPT_URLS += [view + "-list" for view in ["customer", "card",
 SUBSCRIPTION_EXEMPT_URLS += [view + "-detail" for view in ["customer", "card",
                                                            "plan", "subscription",
                                                            "invoice"]]
+MEDIA_ROOT = "/workspaces/"

@@ -98,7 +98,9 @@ urlpatterns = [
         servers_views.terminate, name='server-terminate'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'(?P<namespace>[\w-]+)/billing/subscription_required/$', billing_views.no_subscription,
-        name="subscription-required")
+        name="subscription-required"),
+    url(r'^(?P<namespace>[\w-]+)/projects/file_upload/$', project_views.project_file_upload,
+        name="project-file-upload"),
 ]
 
 
