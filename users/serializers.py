@@ -4,6 +4,7 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer as RestAuth
 from social_django.models import UserSocialAuth
 
 from base.views import RequestUserMixin
+from base.serializers import SearchSerializerMixin
 from .models import UserProfile, Email
 
 
@@ -16,7 +17,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('avatar_url', 'bio', 'url', 'location', 'company', 'timezone')
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(SearchSerializerMixin, serializers.ModelSerializer):
     profile = UserProfileSerializer()
 
     class Meta:
@@ -43,11 +44,6 @@ class UserSerializer(serializers.ModelSerializer):
         if password is not None:
             instance.set_password(password)
         return super().update(instance, validated_data)
-
-    def to_representation(self, instance):
-        if not isinstance(instance, User):
-            instance = instance.object
-        return super().to_representation(instance)
 
 
 class EmailSerializer(RequestUserMixin, serializers.ModelSerializer):

@@ -8,10 +8,11 @@ from pathlib import Path
 from rest_framework import serializers
 from social_django.models import UserSocialAuth
 
+from base.serializers import SearchSerializerMixin
 from .models import Project, File, Collaborator, SyncedResource
 
 
-class ProjectSerializer(serializers.ModelSerializer):
+class ProjectSerializer(SearchSerializerMixin, serializers.ModelSerializer):
     owner = serializers.CharField(source='get_owner_name', read_only=True)
     collaborators = serializers.StringRelatedField(many=True, required=False)
 

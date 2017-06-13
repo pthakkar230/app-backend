@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'infrastructure',
     'triggers',
     'jwt_auth',
+    'search',
 ]
 
 MIDDLEWARE = [

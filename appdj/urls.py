@@ -30,6 +30,7 @@ from infrastructure import views as infra_views
 from jwt_auth import views as jwt_views
 from triggers import views as trigger_views
 from billing import views as billing_views
+from search.views import SearchViewSet
 
 router = routers.DefaultRouter()
 
@@ -70,6 +71,7 @@ urlpatterns = [
     url(r'^auth/token/?$', oauth2_views.TokenView.as_view(), name="token"),
     url(r'^auth/', include('social_django.urls', namespace="social")),
     url(r'^swagger/$', schema_view),
+    url(r'^(?P<namespace>[\w-]+)/search/$', SearchViewSet.as_view({'get': 'list'}), name='search'),
     url(r'^tbs-admin/', admin.site.urls),
     url(r'^actions/', include('actions.urls')),
     url(r'^servers/(?P<server_pk>[^/.]+)$', servers_views.server_internal_details, name="server_internal"),
@@ -80,8 +82,6 @@ urlpatterns = [
     url(r'^(?P<namespace>[\w-]+)/projects/(?P<project_pk>[\w-]+)/synced-resources/$',
         project_views.SyncedResourceViewSet.as_view({'get': 'list', 'post': 'create'})),
     url(r'^(?P<namespace>[\w-]+)/', include(user_router.urls)),
-    url(r'^(?P<namespace>[\w-]+)/users/search/$', user_views.UserSearchView.as_view({'get': 'list'}),
-        name='user_search'),
     url(r'^(?P<namespace>[\w-]+)/users/(?P<user_pk>[\w-]+)/ssh-key/$', user_views.ssh_key, name='ssh_key'),
     url(r'^(?P<namespace>[\w-]+)/users/(?P<user_pk>[\w-]+)/ssh-key/reset/$', user_views.reset_ssh_key,
         name='reset_ssh_key'),
