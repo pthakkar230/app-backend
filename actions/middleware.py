@@ -7,6 +7,8 @@ from rest_framework.views import get_view_name
 from rest_framework.authtoken.models import Token
 
 from .models import Action
+import logging
+log = logging.getLogger('projects')
 
 
 class ActionMiddleware(object):
@@ -88,7 +90,7 @@ class ActionMiddleware(object):
 
     def _get_object_pk_from_response_data(self, data) -> str:
         pk = ''
-        if data is None:
+        if data is None or isinstance(data, list):
             return pk
         for key in data:
             if key == 'id':

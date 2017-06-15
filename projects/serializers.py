@@ -8,7 +8,9 @@ from pathlib import Path
 from rest_framework import serializers
 from social_django.models import UserSocialAuth
 
-from .models import Project, File, Collaborator, SyncedResource
+from .models import Project, File, Collaborator, SyncedResource, ProjectFile
+import logging
+log = logging.getLogger("projects")
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -74,6 +76,20 @@ class FileSerializer(serializers.ModelSerializer):
         old_path.rename(instance.sys_path)
         instance.save(content=content)
         return instance
+
+
+class ProjectFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectFile
+        fields = ("id", "project", "file", "public")
+        read_only_fields = ("author",)
+
+    def create(self, validated_data):
+        project = Project.objects.get(pk=validated_data.pop("project"))
+        proj_file = ProjectFile(project=project,
+                                **validated_data)
+        proj_file.save()
+        return proj_file
 
 
 class CollaboratorSerializer(serializers.ModelSerializer):

@@ -1,8 +1,12 @@
 from django.shortcuts import render, redirect
 from rest_framework import viewsets, status, permissions
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
 
 from base.views import NamespaceMixin
-from projects.serializers import ProjectSerializer, FileSerializer, CollaboratorSerializer, SyncedResourceSerializer
+from projects.serializers import (ProjectSerializer, FileSerializer,
+                                  CollaboratorSerializer, SyncedResourceSerializer,
+                                  ProjectFileSerializer)
 from projects.models import Project, File, Collaborator, SyncedResource
 from projects.filters import FileFilter
 from projects.permissions import ProjectPermission, ProjectChildPermission
@@ -57,8 +61,42 @@ class SyncedResourceViewSet(ProjectMixin, viewsets.ModelViewSet):
         )
 
 
-def project_file_upload(request):
+class ProjectFileViewSet(ProjectMixin,
+                         viewsets.ModelViewSet):
+    queryset = ProjectFile.objects.all()
+    serializer_class = ProjectFileSerializer
+    parser_classes = (MultiPartParser, FormParser)
 
+    def create(self, request, *args, **kwargs):
+
+        files = request.FILES.get("file") or request.FILES.getlist("files")
+        proj_files_to_serialize = []
+        project_pk = request.data.get("project")
+        # Not really sure how to handle this here
+        public = request.data.get("public").lower() in ["true", "on"]
+
+        for f in files:
+            project = Project.objects.get(pk=project_pk)
+            create_data = {'author': self.request.user,
+                           'project': project,
+                           'file': f,
+                           'public': public}
+            project_file = ProjectFile(**create_data)
+
+            project_file.save()
+
+            proj_files_to_serialize.append(project_file.pk)
+
+        proj_files = ProjectFile.objects.filter(pk__in=proj_files_to_serialize)
+
+        serializer = self.serializer_class(proj_files,
+                                           context={'request': request},
+                                           many=True)
+        return Response(data=serializer.data,
+                        status=status.HTTP_201_CREATED)
+
+
+def project_file_upload(request):
     if request.method == "POST":
         form = ProjectFileForm(request.POST, request.FILES)
 

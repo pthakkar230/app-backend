@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf import settings
+from django.conf.urls.static import static
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -50,6 +51,7 @@ router.register(r'projects', project_views.ProjectViewSet)
 project_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 project_router.register(r'servers', servers_views.ServerViewSet)
 project_router.register(r'files', project_views.FileViewSet)
+project_router.register(r'project_files', project_views.ProjectFileViewSet)
 project_router.register(r'servers/(?P<server_pk>[^/.]+)/ssh-tunnels',
                         servers_views.SshTunnelViewSet)
 project_router.register(r'servers/(?P<server_pk>[^/.]+)/run-stats',
@@ -101,7 +103,7 @@ urlpatterns = [
         name="subscription-required"),
     url(r'^(?P<namespace>[\w-]+)/projects/file_upload/$', project_views.project_file_upload,
         name="project-file-upload"),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
 @api_view()

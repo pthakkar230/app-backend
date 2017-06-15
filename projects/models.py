@@ -124,9 +124,9 @@ class File(models.Model):
 
 
 def user_project_directory_path(instance, filename):
-    return "{usr}/{proj}/{fname}".format(usr=instance.author.username,
-                                         proj=instance.project.pk,
-                                         fname=filename)
+    return "{usr}/{proj}/{fname}/".format(usr=instance.author.username,
+                                          proj=instance.project.pk,
+                                          fname=filename)
 
 
 class ProjectFile(models.Model):
@@ -136,6 +136,12 @@ class ProjectFile(models.Model):
     public = models.BooleanField(default=False)
 
     objects = FileQuerySet.as_manager()
+
+    def get_absolute_url(self, namespace):
+        return reverse(
+            'file-detail',
+            kwargs={'namespace': namespace.name, 'project_pk': str(self.project.pk), 'pk': str(self.pk)}
+        )
 
 
 class SyncedResourceQuerySet(models.QuerySet):
