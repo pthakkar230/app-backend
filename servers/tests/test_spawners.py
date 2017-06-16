@@ -47,7 +47,6 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         self.server.config['type'] = 'restful'
         cmd = self.spawner._get_cmd()
         self.assertIn("runner", cmd)
-        self.assertIn(self.user.auth_token.key, cmd)
         self.assertIn(self.user.username, cmd)
         self.assertIn(str(self.server.project.pk), cmd)
         self.assertIn(str(self.server.pk), cmd)
@@ -60,7 +59,6 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         }
         cmd = self.spawner._get_cmd()
         self.assertIn("runner", cmd)
-        self.assertIn(self.user.auth_token.key, cmd)
         self.assertIn(self.user.username, cmd)
         self.assertIn(str(self.server.project.pk), cmd)
         self.assertIn(str(self.server.pk), cmd)
@@ -72,7 +70,6 @@ class TestDockerSpawnerForModel(TransactionTestCase):
         }
         cmd = self.spawner._get_cmd()
         self.assertIn("runner", cmd)
-        self.assertIn(self.user.auth_token.key, cmd)
         self.assertIn(self.user.username, cmd)
         self.assertIn(str(self.server.project.pk), cmd)
         self.assertIn(str(self.server.pk), cmd)

@@ -1,0 +1,4 @@
+{{ object.name }}
+{{ object.project.name }}
+{{ object.created_by }}
+{{ object.image_name }}

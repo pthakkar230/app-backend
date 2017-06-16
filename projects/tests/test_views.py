@@ -3,6 +3,9 @@ import shutil
 from pathlib import Path
 
 from django.urls import reverse
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -11,7 +14,20 @@ from users.tests.factories import UserFactory
 from ..models import Project, File
 
 
-class ProjectTest(APITestCase):
+class ProjectTestMixin(object):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        content_type = ContentType.objects.get_for_model(Project)
+        for perm in Project._meta.permissions:
+            Permission.objects.get_or_create(
+                codename=perm[0],
+                name=perm[1],
+                content_type=content_type,
+            )
+
+
+class ProjectTest(ProjectTestMixin, APITestCase):
     def setUp(self):
         self.user = UserFactory()
         self.token_header = 'Token {}'.format(self.user.auth_token.key)
@@ -28,6 +44,22 @@ class ProjectTest(APITestCase):
         self.assertEqual(Project.objects.count(), 1)
         self.assertEqual(Project.objects.get().name, data['name'])
 
+    def test_create_project_with_different_user(self):
+        staff_user = UserFactory(is_staff=True)
+        token_header = 'Token {}'.format(staff_user.auth_token.key)
+        client = self.client_class(HTTP_AUTHORIZATION=token_header)
+        url = reverse('project-list', kwargs={'namespace': self.user.username})
+        data = dict(
+            name='Test1',
+            description='Test description',
+        )
+        response = client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Project.objects.count(), 1)
+        project = Project.objects.get()
+        self.assertEqual(project.name, data['name'])
+        self.assertEqual(project.get_owner_name(), self.user.username)
+
     def test_list_projects(self):
         projects_count = 4
         CollaboratorFactory.create_batch(4, user=self.user)
@@ -39,6 +71,7 @@ class ProjectTest(APITestCase):
     def test_project_details(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
+        assign_perm('read_project', self.user, project)
         url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -49,6 +82,7 @@ class ProjectTest(APITestCase):
     def test_project_update(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
+        assign_perm('write_project', self.user, project)
         url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         data = dict(
             name='Test-1',
@@ -62,6 +96,7 @@ class ProjectTest(APITestCase):
     def test_project_partial_update(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
+        assign_perm('write_project', self.user, project)
         url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         data = dict(
             name='Test-1',
@@ -74,18 +109,41 @@ class ProjectTest(APITestCase):
     def test_project_delete(self):
         collaborator = CollaboratorFactory(user=self.user)
         project = collaborator.project
+        assign_perm('write_project', self.user, project)
         url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertIsNone(Project.objects.filter(pk=project.pk).first())
 
+    def test_project_read_perm(self):
+        collaborator = CollaboratorFactory(user=self.user)
+        project = collaborator.project
+        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        assign_perm('read_project', self.user, project)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-class ProjectFileTest(APITestCase):
+    def test_project_write_perm(self):
+        collaborator = CollaboratorFactory(user=self.user)
+        project = collaborator.project
+        url = reverse('project-detail', kwargs={'namespace': self.user.username, 'pk': project.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        assign_perm('write_project', self.user, project)
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+
+class ProjectFileTest(ProjectTestMixin, APITestCase):
     def setUp(self):
         collaborator = CollaboratorFactory()
         self.user = collaborator.user
         self.token_header = 'Token {}'.format(self.user.auth_token.key)
         self.project = collaborator.project
+        assign_perm('read_project', self.user, self.project)
+        assign_perm('write_project', self.user, self.project)
         self.url_kwargs = {'namespace': self.user.username, 'project_pk': self.project.pk}
         self.user_dir = Path('/tmp', self.user.username)
         self.project_root = self.user_dir.joinpath(str(self.project.pk))

@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from guardian.shortcuts import assign_perm
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -48,6 +49,7 @@ class ServerTest(APITestCase):
 
     def test_server_details(self):
         server = ServerFactory(project=self.project)
+        assign_perm('read_project', self.user, self.project)
         self.url_kwargs.update({
             'pk': str(server.pk)
         })
@@ -57,6 +59,7 @@ class ServerTest(APITestCase):
 
     def test_server_update(self):
         server = ServerFactory(project=self.project)
+        assign_perm('write_project', self.user, self.project)
         self.url_kwargs.update({
             'pk': str(server.pk)
         })
@@ -73,6 +76,7 @@ class ServerTest(APITestCase):
 
     def test_server_partial_update(self):
         server = ServerFactory(project=self.project)
+        assign_perm('write_project', self.user, self.project)
         self.url_kwargs.update({
             'pk': str(server.pk)
         })
@@ -85,6 +89,7 @@ class ServerTest(APITestCase):
 
     def test_server_delete(self):
         server = ServerFactory(project=self.project)
+        assign_perm('write_project', self.user, self.project)
         self.url_kwargs.update({
             'pk': str(server.pk)
         })
@@ -109,25 +114,17 @@ class ServerTest(APITestCase):
         }
         self.assertDictEqual(expected, response.data)
 
-    @patch('servers.spawners.DockerSpawner.status')
-    def test_server_internal_not_running(self, server_status):
-        statuses = [
-            Server.STOPPED,
-            Server.STOPPING,
-            Server.PENDING,
-            Server.LAUNCHING,
-            Server.ERROR,
-            Server.TERMINATING,
-            Server.TERMINATED
-        ]
-        for state in statuses:
-            server_status.return_value = state
-            server = ServerFactory(project=self.project)
-            url = reverse('server_internal', kwargs={'server_pk': server.pk})
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            expected = {'server': '', 'container_name': ''}
-            self.assertDictEqual(expected, response.data)
+    def test_server_stop_perm(self):
+        server = ServerFactory(project=self.project)
+        self.url_kwargs.update({
+            'pk': str(server.pk)
+        })
+        url = reverse('server-stop', kwargs=self.url_kwargs)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        assign_perm('write_project', self.user, self.project)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
 class ServerRunStatisticsTestCase(APITestCase):

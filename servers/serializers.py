@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from rest_framework import serializers
 
+from base.serializers import SearchSerializerMixin
 from . import models
 
 
@@ -11,7 +12,7 @@ class EnvironmentResourceSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'cpu', 'memory', 'active')
 
 
-class ServerSerializer(serializers.ModelSerializer):
+class ServerSerializer(SearchSerializerMixin, serializers.ModelSerializer):
     endpoint = serializers.SerializerMethodField()
     logs_url = serializers.SerializerMethodField()
     status_url = serializers.SerializerMethodField()

@@ -1,0 +1,3 @@
+{{ object.username }}
+{{ object.get_full_name }}
+{{ object.email }}

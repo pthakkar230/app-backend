@@ -24,6 +24,8 @@ from appdj.settings.tbslog import TBS_LOGGING
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'test')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', "test secret key")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
@@ -50,7 +52,9 @@ INSTALLED_APPS = [
     'django_extensions',
     'cacheops',
     'corsheaders',
+    'guardian',
     'django_filters',
+    'haystack',
 
     'base',
     'users',
@@ -61,6 +65,7 @@ INSTALLED_APPS = [
     'infrastructure',
     'triggers',
     'jwt_auth',
+    'search',
 ]
 
 MIDDLEWARE = [
@@ -74,6 +79,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.contrib.sites.middleware.CurrentSiteMiddleware',
     'base.middleware.NamespaceMiddleware',
+    'billing.middleware.SubscriptionMiddleware'
 ]
 
 ROOT_URLCONF = 'appdj.urls'
@@ -81,7 +87,7 @@ ROOT_URLCONF = 'appdj.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -108,6 +114,7 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',
     'social_core.backends.slack.SlackOAuth2',
     'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
 )
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_CLIENT_ID', '')
@@ -285,6 +292,7 @@ MIGRATION_MODULES = {
     'django_celery_results': 'appdj.migrations.django_celery_results',
     'oauth2_provider': 'appdj.migrations.oauth2_provider',
     'social_django': 'appdj.migrations.social_django',
+    'guardian': 'appdj.migrations.guardian',
 }
 
 ABSOLUTE_URL_OVERRIDES = {
@@ -310,3 +318,23 @@ SOCIAL_AUTH_SLACK_SECRET = os.environ.get('SLACK_SECRET')
 CORS_ORIGIN_ALLOW_ALL = True
 
 LOGGING = TBS_LOGGING
+
+# A list of url *names* that do not require a subscription to access.
+SUBSCRIPTION_EXEMPT_URLS = [LOGIN_URL,
+                            "subscription-required"]
+SUBSCRIPTION_EXEMPT_URLS += [view + "-list" for view in ["customer", "card",
+                                                         "plan", "subscription",
+                                                         "invoice"]]
+
+SUBSCRIPTION_EXEMPT_URLS += [view + "-detail" for view in ["customer", "card",
+                                                           "plan", "subscription",
+                                                           "invoice"]]
+
+HAYSTACK_CONNECTIONS = {
+    "default": {
+        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
+        'URL': os.environ.get("ELASTICSEARCH_URL", "http://search:9200/"),
+        'INDEX_NAME': '3blades',
+    }
+}
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'

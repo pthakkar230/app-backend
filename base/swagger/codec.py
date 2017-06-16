@@ -105,6 +105,8 @@ class OpenAPICodec(CoreOpenAPICodec):
                 }
                 if prop.items:
                     update['items'] = {'type': prop.items}
+                if prop.enum:
+                    update['enum'] = prop.enum
                 properties[prop.name].update(update)
         return properties
 

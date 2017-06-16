@@ -39,3 +39,10 @@ INSTALLED_APPS += (
 #    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 #    'base.middleware.NamespaceMiddleware',
 #]
+ANONYMOUS_USER_NAME = None
+
+HAYSTACK_CONNECTIONS = {
+    "default": {
+        'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+    }
+}

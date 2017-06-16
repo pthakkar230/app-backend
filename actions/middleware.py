@@ -30,6 +30,7 @@ class ActionMiddleware(object):
                 pass
             else:
                 user = token_obj.user
+                request.user = user
         filter_kwargs = dict(
             path=path,
             user=user,
