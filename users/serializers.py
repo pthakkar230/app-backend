@@ -4,7 +4,11 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer as RestAuth
 from social_django.models import UserSocialAuth
 
 from base.views import RequestUserMixin
+from base.serializers import SearchSerializerMixin
 from .models import UserProfile, Email
+
+
+User = get_user_model()
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -13,18 +17,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('avatar_url', 'bio', 'url', 'location', 'company', 'timezone')
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(SearchSerializerMixin, serializers.ModelSerializer):
     profile = UserProfileSerializer()
 
     class Meta:
-        model = get_user_model()
+        model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'password', 'profile')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
         password = validated_data.pop('password')
-        user = get_user_model()(**validated_data)
+        user = User(**validated_data)
         user.set_password(password)
         user.save()
         profile = UserProfile(user=user, **profile_data)

@@ -1,15 +1,18 @@
 from django.contrib.auth import get_user_model
+from haystack.query import SearchQuerySet, EmptySearchQuerySet
 from social_django.models import UserSocialAuth
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404, CreateAPIView
+from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from base.views import UUIDRegexMixin
 from utils import create_ssh_key
 
+from .filters import UserSearchFilter
 from .models import Email
 from .serializers import UserSerializer, EmailSerializer, IntegrationSerializer, AuthTokenSerializer
 
@@ -19,11 +22,31 @@ User = get_user_model()
 class UserViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
     queryset = User.objects.filter(is_active=True).select_related('profile')
     serializer_class = UserSerializer
-    filter_fields = ('username', 'email')
 
     def perform_destroy(self, instance):
         instance.active = False
         instance.save()
+
+
+class UserSearchView(ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = UserSerializer
+    filter_class = UserSearchFilter
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        qs = EmptySearchQuerySet()
+        if 'q' in self.request.GET:
+            qs = SearchQuerySet().filter(content=self.request.GET.get('q', ''))
+        return qs
 
 
 class RegisterView(CreateAPIView):
@@ -38,20 +61,20 @@ class RegisterView(CreateAPIView):
 
 @api_view(['GET'])
 def ssh_key(request, user_pk):
-    user = get_object_or_404(get_user_model(), pk=user_pk)
+    user = get_object_or_404(User, pk=user_pk)
     return Response(data={'key': user.profile.ssh_public_key()})
 
 
 @api_view(['POST'])
 def reset_ssh_key(request, user_pk):
-    user = get_object_or_404(get_user_model(), pk=user_pk)
+    user = get_object_or_404(User, pk=user_pk)
     create_ssh_key(user)
     return Response(data={'key': user.profile.ssh_public_key()})
 
 
 @api_view(['GET'])
 def api_key(request, user_pk):
-    user = get_object_or_404(get_user_model(), pk=user_pk)
+    user = get_object_or_404(User, pk=user_pk)
     return Response(data={'key': user.auth_token.key})
 
 
