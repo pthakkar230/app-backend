@@ -46,18 +46,22 @@ If using Debian or Ubuntu Linux distributions, you may have to install dependenc
 
     sudo apt-get install -y libpq-dev libssl-dev
 
-We maintain an `docker-compose.yml` file to launch our full stack. Launching the full stack may be necessary to support integration testing, such as creating new user servers. Services include:
+We maintain an `docker-compose.yml` file to launch our working `app-backend` stack. Launching the full stack may be necessary to support integration testing, such as creating new user servers. Services include (in alphabetical order):
 
+- [API](https://hub.docker.com/r/3blades/app-backend)
+- [Celery](https://hub.docker.com/r/3blades/app-backend)
+- [Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html)
+- [Notificaitons Server](https://hub.docker.com/r/3blades/notifications-server)
+- [OpenResty](https://hub.docker.com/r/3blades/)
 - [Postgres](https://hub.docker.com/_/postgres/)
 - [Redis](https://hub.docker.com/_/redis/)
 - [RabbitMQ](https://hub.docker.com/_/rabbitmq/)
-- [Notificaitons Server](https://hub.docker.com/r/3blades/notifications-server)
-- [Logspout](https://hub.docker.com/r/3blades/logspout/)
-- [Celery](https://hub.docker.com/r/3blades/app-backend)
-- [API](https://hub.docker.com/r/3blades/app-backend)
-- [OpenResty](https://hub.docker.com/r/3blades/)
+
+
 
 > `docker-compose up -d` should check for latest image and pull newer image if one exists, but it may be necessary to pull images explicitly using `docker pull <3blades/image-name`.
+
+> Please refer to `https://github.com/3blades/onpremise` for full stack setup, which includes `react-frontend`.
 
 ### Systemd
 
@@ -97,17 +101,33 @@ Restart docker service and confirm that setting is in place for CGroup:
 
 Modify environment variables located in `env` file with your local settings. You can also export env vars like so:
 
-
-    TBS_HOST=my_external_facing_ipv4
+```
+    AWS_ACCESS_KEY_ID=
+    AWS_SECRET_ACCESS_KEY=
+    AWS_STORAGE_BUCKET_NAME=
     C_ROOT=1
-    DATABASE_URL='postgres://postgres:@db:5432/postgres'
+    DATABASE_URL=postgres://postgres:@db:5432/postgres/
     DEBUG=True
-    DJANGO_SETTINGS_MODULE='appdj.settings.dev'
-    DOCKER_HOST='tcp://my_vm_ipv4_address:2375'
-    RABBITMQ_URL='amqp://broker'
-    REDIS_URL='redis://localhost:6379/0'
+    DJANGO_SETTINGS_MODULE=appdj.settings.prod
+    DOCKER_DOMAIN=172.17.0.1:2375
+    DOCKER_HOST=tcp://172.17.0.1:2375/
+    ELASTICSEARCH_URL=http://search:9200/
+    GITHUB_CLIENT_ID=
+    GITHUB_CLIENT_SECRET=
+    GOOGLE_CLIENT_ID=
+    GOOGLE_CLIENT_SECRET=
+    RABBITMQ_URL=amqp://broker/
+    REDIS_URL=redis://cache:6379/0
+    RESOURCE_DIR=
+    SERVER_RESOURCE_DIR=
+    SECRET_KEY=
+    SLACK_KEY=
+    SLACK_SECRET=
+    STRIPE_SECRET_KEY=
+    TBS_HOST=
+```
 
-> Obtain internal virtual machine IPv4 address with `ifconfig`. Usually enp0s3 or eth0 will be the IP address you need to configure for DOCKER_HOST env var. If you switch setup to use production configuration (`DJANGO_SETTINGS_MODULE='appdj.settings.prod`) make sure to set debug to false (`DEBUG=False`). By default, app-backend allows connections from `go-pilot.3blades.io` and `localhost`. Additional host names or IP addresses can be added to the `TBS_HOST`.
+> Obtain internal virtual machine IPv4 address with `ifconfig`. Usually enp0s3 or eth0 will be the IP address you need to configure for DOCKER_HOST env var. If you switch setup to use production configuration (`DJANGO_SETTINGS_MODULE='appdj.settings.prod`) make sure to set debug to false (`DEBUG=False`). By default, app-backend allows connections from `staging.3blades.io` and `localhost`. Additional host names or IP addresses can be added to the `TBS_HOST`.
 
 A volume mount is used to persist files used by docker containers. By default, `docker-compose.yml` uses the `/workspaces` directory. You can either add that directory or change `docker-compose.yml` to use another one.
 
