@@ -31,6 +31,7 @@ from infrastructure import views as infra_views
 from jwt_auth import views as jwt_views
 from triggers import views as trigger_views
 from billing import views as billing_views
+from search.views import SearchViewSet
 
 router = routers.DefaultRouter()
 
@@ -72,6 +73,7 @@ urlpatterns = [
     url(r'^auth/token/?$', oauth2_views.TokenView.as_view(), name="token"),
     url(r'^auth/', include('social_django.urls', namespace="social")),
     url(r'^swagger/$', schema_view),
+    url(r'^(?P<namespace>[\w-]+)/search/$', SearchViewSet.as_view({'get': 'list'}), name='search'),
     url(r'^tbs-admin/', admin.site.urls),
     url(r'^actions/', include('actions.urls')),
     url(r'^servers/(?P<server_pk>[^/.]+)$', servers_views.server_internal_details, name="server_internal"),

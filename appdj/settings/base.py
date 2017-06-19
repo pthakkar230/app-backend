@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'guardian',
     'django_filters',
+    'haystack',
 
     'base',
     'users',
@@ -64,6 +65,7 @@ INSTALLED_APPS = [
     'infrastructure',
     'triggers',
     'jwt_auth',
+    'search',
 ]
 
 MIDDLEWARE = [
@@ -85,7 +87,7 @@ ROOT_URLCONF = 'appdj.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -331,3 +333,12 @@ SUBSCRIPTION_EXEMPT_URLS += [view + "-detail" for view in ["customer", "card",
 # But I'm not sure if they're secure and what not for prod
 MEDIA_ROOT = "/workspaces/"
 MEDIA_URL = "/media/"
+
+HAYSTACK_CONNECTIONS = {
+    "default": {
+        'ENGINE': 'haystack.backends.elasticsearch2_backend.Elasticsearch2SearchEngine',
+        'URL': os.environ.get("ELASTICSEARCH_URL", "http://search:9200/"),
+        'INDEX_NAME': '3blades',
+    }
+}
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
