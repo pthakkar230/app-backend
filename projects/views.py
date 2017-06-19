@@ -1,4 +1,3 @@
-from django.shortcuts import render, redirect
 from rest_framework import viewsets, status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -12,9 +11,6 @@ from projects.filters import FileFilter
 from projects.permissions import ProjectPermission, ProjectChildPermission
 from projects.tasks import sync_github
 from projects.models import ProjectFile
-from projects.forms import ProjectFileForm
-import logging
-log = logging.getLogger('projects')
 
 
 class ProjectViewSet(NamespaceMixin, viewsets.ModelViewSet):
@@ -70,6 +66,8 @@ class ProjectFileViewSet(ProjectMixin,
     def create(self, request, *args, **kwargs):
 
         files = request.FILES.get("file") or request.FILES.getlist("files")
+        if not isinstance(files, list):
+            files = [files]
         proj_files_to_serialize = []
         project_pk = request.data.get("project")
         # Not really sure how to handle this here
@@ -95,29 +93,3 @@ class ProjectFileViewSet(ProjectMixin,
         return Response(data=serializer.data,
                         status=status.HTTP_201_CREATED)
 
-
-def project_file_upload(request):
-    if request.method == "POST":
-        form = ProjectFileForm(request.POST, request.FILES)
-
-        if form.is_valid():
-            # Should this be handled elsewhere?
-            files = request.FILES.getlist("files")
-
-            for f in files:
-                project_pk = request.POST.get("project")
-                project = Project.objects.get(pk=project_pk)
-                log.debug(("project", project))
-
-                proj_file = ProjectFile.objects.create(author=request.user,
-                                                       project=project,
-                                                       file=f,
-                                                       public=request.POST.get("public", False))
-                log.info("Created project file: {proj_file}".format(proj_file=proj_file))
-
-            return redirect("project-file-upload", namespace=request.user.username)
-
-    else:
-        form = ProjectFileForm()
-
-    return render(request, "projects/project_file_upload.html", {'form': form})

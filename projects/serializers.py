@@ -9,10 +9,8 @@ from rest_framework import serializers
 from social_django.models import UserSocialAuth
 
 from base.serializers import SearchSerializerMixin
-from .models import Project, File, Collaborator, SyncedResource
-from .models import Project, File, Collaborator, SyncedResource, ProjectFile
-import logging
-log = logging.getLogger("projects")
+from projects.models import (Project, File, Collaborator,
+                             SyncedResource, ProjectFile)
 
 
 class ProjectSerializer(SearchSerializerMixin, serializers.ModelSerializer):
@@ -92,6 +90,17 @@ class ProjectFileSerializer(serializers.ModelSerializer):
                                 **validated_data)
         proj_file.save()
         return proj_file
+
+    def update(self, instance, validated_data):
+
+        for key in validated_data:
+            if key == "file":
+                # Sort of sketches me out.
+                instance.file.delete()
+            setattr(instance, key, validated_data[key])
+
+        instance.save()
+        return instance
 
 
 class CollaboratorSerializer(serializers.ModelSerializer):

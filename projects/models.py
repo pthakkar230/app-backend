@@ -143,6 +143,10 @@ class ProjectFile(models.Model):
             kwargs={'namespace': namespace.name, 'project_pk': str(self.project.pk), 'pk': str(self.pk)}
         )
 
+    def delete(self, using=None, keep_parents=False):
+        self.file.delete()
+        return super().delete(using, keep_parents)
+
 
 class SyncedResourceQuerySet(models.QuerySet):
     def namespace(self, namespace):

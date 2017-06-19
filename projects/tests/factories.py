@@ -1,7 +1,7 @@
 import factory
-
+from factory import fuzzy
 from users.tests.factories import UserFactory
-from ..models import Project, Collaborator, File
+from projects.models import Project, Collaborator, File, ProjectFile
 
 
 class ProjectFactory(factory.django.DjangoModelFactory):
@@ -37,3 +37,15 @@ class FileFactory(factory.django.DjangoModelFactory):
         project_file = super()._generate(create, attrs)
         project_file.save(content=content)
         return project_file
+
+
+class ProjectFileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ProjectFile
+
+    author = factory.SubFactory(UserFactory)
+    # TODO: Does this guarantee the project belongs to the user? I don't think so...
+    project = factory.SubFactory(ProjectFactory)
+    public = fuzzy.FuzzyChoice([True, False])
+    # file must be passed in
+    file = None

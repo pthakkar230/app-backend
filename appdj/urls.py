@@ -103,8 +103,6 @@ urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'(?P<namespace>[\w-]+)/billing/subscription_required/$', billing_views.no_subscription,
         name="subscription-required"),
-    url(r'^(?P<namespace>[\w-]+)/projects/file_upload/$', project_views.project_file_upload,
-        name="project-file-upload"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
