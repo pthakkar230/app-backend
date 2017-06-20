@@ -1,5 +1,3 @@
-import base64
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -9,7 +7,7 @@ from rest_framework import serializers
 from social_django.models import UserSocialAuth
 
 from base.serializers import SearchSerializerMixin
-from projects.models import (Project, File, Collaborator,
+from projects.models import (Project, Collaborator,
                              SyncedResource, ProjectFile)
 
 
@@ -40,42 +38,6 @@ class FileAuthorSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = ('id', 'email', 'username')
         read_only_fields = ('email', 'username')
-
-
-class Base64CharField(serializers.CharField):
-    def to_representation(self, value):
-        return base64.b64encode(value)
-
-    def to_internal_value(self, data):
-        return base64.b64decode(data)
-
-
-class FileSerializer(serializers.ModelSerializer):
-    content = Base64CharField()
-    size = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = File
-        fields = ('id', 'path', 'encoding', 'public', 'content', 'size', 'author', 'project')
-
-    def create(self, validated_data):
-        content = validated_data.pop('content')
-        project_file = File(**validated_data)
-        project_file.save(content=content)
-        return project_file
-
-    def update(self, instance, validated_data):
-        content = validated_data.pop('content')
-        instance.author = validated_data.pop('author')
-        instance.project = validated_data.pop('project')
-        old_path = instance.sys_path
-        for field in validated_data:
-            setattr(instance, field, validated_data[field])
-        if not instance.sys_path.parent.exists():
-            instance.sys_path.parent.mkdir(parents=True, exist_ok=True)
-        old_path.rename(instance.sys_path)
-        instance.save(content=content)
-        return instance
 
 
 class ProjectFileSerializer(serializers.ModelSerializer):

@@ -51,7 +51,6 @@ user_router.register(r'integrations', user_views.IntegrationViewSet)
 router.register(r'projects', project_views.ProjectViewSet)
 project_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 project_router.register(r'servers', servers_views.ServerViewSet)
-project_router.register(r'files', project_views.FileViewSet)
 project_router.register(r'project_files', project_views.ProjectFileViewSet)
 project_router.register(r'servers/(?P<server_pk>[^/.]+)/ssh-tunnels',
                         servers_views.SshTunnelViewSet)

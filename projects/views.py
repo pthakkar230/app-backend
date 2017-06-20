@@ -3,11 +3,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 
 from base.views import NamespaceMixin
-from projects.serializers import (ProjectSerializer, FileSerializer,
-                                  CollaboratorSerializer, SyncedResourceSerializer,
+from projects.serializers import (ProjectSerializer,
+                                  CollaboratorSerializer,
+                                  SyncedResourceSerializer,
                                   ProjectFileSerializer)
-from projects.models import Project, File, Collaborator, SyncedResource
-from projects.filters import FileFilter
+from projects.models import Project, Collaborator, SyncedResource
 from projects.permissions import ProjectPermission, ProjectChildPermission
 from projects.tasks import sync_github
 from projects.models import ProjectFile
@@ -26,12 +26,6 @@ class ProjectMixin(object):
 
     def get_queryset(self):
         return super().get_queryset().filter(project_id=self.kwargs.get('project_pk'))
-
-
-class FileViewSet(ProjectMixin, viewsets.ModelViewSet):
-    queryset = File.objects.select_related('author', 'project')
-    serializer_class = FileSerializer
-    filter_class = FileFilter
 
 
 class CollaboratorViewSet(ProjectMixin, viewsets.ModelViewSet):
@@ -71,7 +65,7 @@ class ProjectFileViewSet(ProjectMixin,
         proj_files_to_serialize = []
         project_pk = request.data.get("project")
         # Not really sure how to handle this here
-        public = request.data.get("public").lower() in ["true", "on"]
+        public = request.data.get("public") in ["true", "on"]
 
         for f in files:
             project = Project.objects.get(pk=project_pk)

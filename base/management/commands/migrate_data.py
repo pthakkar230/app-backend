@@ -5,7 +5,7 @@ from django.core.management import BaseCommand
 from django.utils import timezone
 from pathlib import Path
 
-from projects.models import Project, File
+from projects.models import Project, ProjectFile
 from servers.models import EnvironmentType, EnvironmentResource, Server, Workspace, Model, Job, DataSource, \
     ServerRunStatistics, ServerStatistics, SshTunnel
 from users.models import UserProfile
@@ -375,8 +375,8 @@ class Command(BaseCommand):
                         if project is not None:
                             new_project_dir = Path(self.root_dir, user.username, str(project.pk))
                             project_dir.rename(new_project_dir)
-                            files = self.walk_dir(File, new_project_dir, user, project)
-                            File.objects.bulk_create(files)
+                            files = self.walk_dir(ProjectFile, new_project_dir, user, project)
+                            ProjectFile.objects.bulk_create(files)
 
     def walk_dir(self, model, directory, user, project):
         files = []

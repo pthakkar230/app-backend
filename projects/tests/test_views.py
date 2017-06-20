@@ -193,6 +193,30 @@ class ProjectFileTest(ProjectTestMixin, APITestCase):
         path_obj = Path(full_path)
         self.assertTrue(path_obj.is_file())
 
+    def test_create_multiple_files(self):
+        files_list = []
+        file_count = 3
+
+        for x in range(0, file_count):
+            uploaded_file = generate_random_file_content(x)
+            files_list.append(uploaded_file)
+
+        url = reverse('projectfile-list', kwargs=self.url_kwargs)
+        data = {'project': self.project.pk,
+                'files': files_list}
+
+        response = self.client.post(url, data, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        proj_files = ProjectFile.objects.filter(project=self.project,
+                                                author=self.user)
+        self.assertEqual(proj_files.count(), file_count)
+
+        for pf in proj_files:
+            full_path = os.path.join(settings.MEDIA_ROOT, pf.file.name)
+            path_obj = Path(full_path)
+            self.assertTrue(path_obj.is_file())
+
     def test_list_files(self):
         files_count = 4
         for x in range(0, files_count):
