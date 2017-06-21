@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf import settings
+from django.conf.urls.static import static
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -50,7 +51,7 @@ user_router.register(r'integrations', user_views.IntegrationViewSet)
 router.register(r'projects', project_views.ProjectViewSet)
 project_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
 project_router.register(r'servers', servers_views.ServerViewSet)
-project_router.register(r'files', project_views.FileViewSet)
+project_router.register(r'project_files', project_views.ProjectFileViewSet)
 project_router.register(r'servers/(?P<server_pk>[^/.]+)/ssh-tunnels',
                         servers_views.SshTunnelViewSet)
 project_router.register(r'servers/(?P<server_pk>[^/.]+)/run-stats',
@@ -100,7 +101,7 @@ urlpatterns = [
         servers_views.terminate, name='server-terminate'),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'(?P<namespace>[\w-]+)/billing/subscription_required/$', billing_views.no_subscription,
-        name="subscription-required")
+        name="subscription-required"),
 ]
 
 
@@ -119,5 +120,5 @@ if settings.DEBUG:
     urlpatterns += [
         url(r'^auth/simple-token-auth/$', user_views.ObtainAuthToken.as_view()),
         url(r'^__debug__/', include(debug_toolbar.urls)),
-    ]
+    ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns = staticfiles_urlpatterns() + urlpatterns

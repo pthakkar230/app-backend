@@ -1,5 +1,4 @@
 import base64
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -9,7 +8,8 @@ from rest_framework import serializers
 from social_django.models import UserSocialAuth
 
 from base.serializers import SearchSerializerMixin
-from .models import Project, File, Collaborator, SyncedResource
+from projects.models import (Project, Collaborator,
+                             SyncedResource, ProjectFile)
 
 
 class ProjectSerializer(SearchSerializerMixin, serializers.ModelSerializer):
@@ -49,31 +49,31 @@ class Base64CharField(serializers.CharField):
         return base64.b64decode(data)
 
 
-class FileSerializer(serializers.ModelSerializer):
-    content = Base64CharField()
-    size = serializers.IntegerField(read_only=True)
+class ProjectFileSerializer(serializers.ModelSerializer):
+    base64_data = Base64CharField(required=False)
+    name = serializers.CharField(required=False)
 
     class Meta:
-        model = File
-        fields = ('id', 'path', 'encoding', 'public', 'content', 'size', 'author', 'project')
+        model = ProjectFile
+        fields = ("id", "project", "file", "public", "base64_data", "name")
+        read_only_fields = ("author",)
 
     def create(self, validated_data):
-        content = validated_data.pop('content')
-        project_file = File(**validated_data)
-        project_file.save(content=content)
-        return project_file
+        project = Project.objects.get(pk=validated_data.pop("project"))
+        proj_file = ProjectFile(project=project,
+                                **validated_data)
+        proj_file.save()
+        return proj_file
 
     def update(self, instance, validated_data):
-        content = validated_data.pop('content')
-        instance.author = validated_data.pop('author')
-        instance.project = validated_data.pop('project')
-        old_path = instance.sys_path
-        for field in validated_data:
-            setattr(instance, field, validated_data[field])
-        if not instance.sys_path.parent.exists():
-            instance.sys_path.parent.mkdir(parents=True, exist_ok=True)
-        old_path.rename(instance.sys_path)
-        instance.save(content=content)
+
+        for key in validated_data:
+            if key == "file":
+                # Sort of sketches me out.
+                instance.file.delete()
+            setattr(instance, key, validated_data[key])
+
+        instance.save()
         return instance
 
 

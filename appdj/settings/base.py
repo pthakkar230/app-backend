@@ -329,6 +329,10 @@ SUBSCRIPTION_EXEMPT_URLS += [view + "-list" for view in ["customer", "card",
 SUBSCRIPTION_EXEMPT_URLS += [view + "-detail" for view in ["customer", "card",
                                                            "plan", "subscription",
                                                            "invoice"]]
+# What should this setting actually be? They seem reasonable for dev environments
+# But I'm not sure if they're secure and what not for prod
+MEDIA_ROOT = "/workspaces/"
+MEDIA_URL = "/media/"
 
 HAYSTACK_CONNECTIONS = {
     "default": {

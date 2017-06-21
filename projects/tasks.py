@@ -7,7 +7,7 @@ from celery.utils.log import get_task_logger
 from git import Repo
 from social_django.models import UserSocialAuth
 
-from .models import File, Project
+from .models import ProjectFile, Project
 
 logger = get_task_logger(__name__)
 
@@ -29,10 +29,10 @@ def sync_github(resource_path, user_pk, project_pk, **kwargs):
             continue
         for filename in files:
             file_path = Path(root, filename)
-            db_files.append(File(
+            db_files.append(ProjectFile(
                 path=str(file_path.relative_to(project.resource_root())),
                 encoding='utf-8',
                 author_id=user_pk,
                 project_id=project_pk,
             ))
-    File.objects.bulk_create(db_files)
+    ProjectFile.objects.bulk_create(db_files)
