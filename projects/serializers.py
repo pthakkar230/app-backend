@@ -1,3 +1,4 @@
+import base64
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -40,10 +41,21 @@ class FileAuthorSerializer(serializers.ModelSerializer):
         read_only_fields = ('email', 'username')
 
 
+class Base64CharField(serializers.CharField):
+    def to_representation(self, value):
+        return base64.b64encode(value)
+
+    def to_internal_value(self, data):
+        return base64.b64decode(data)
+
+
 class ProjectFileSerializer(serializers.ModelSerializer):
+    base64_data = Base64CharField(required=False)
+    name = serializers.CharField(required=False)
+
     class Meta:
         model = ProjectFile
-        fields = ("id", "project", "file", "public")
+        fields = ("id", "project", "file", "public", "base64_data", "name")
         read_only_fields = ("author",)
 
     def create(self, validated_data):

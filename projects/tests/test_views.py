@@ -1,6 +1,7 @@
 import filecmp
 import shutil
 import os
+import base64
 from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -193,6 +194,21 @@ class ProjectFileTest(ProjectTestMixin, APITestCase):
         path_obj = Path(full_path)
         self.assertTrue(path_obj.is_file())
 
+    def test_create_base64_file(self):
+        url = reverse('projectfile-list', kwargs=self.url_kwargs)
+        b64_content = b"test"
+        b64 = base64.b64encode(b64_content)
+        data = {'project': self.project.pk,
+                'base64_data': b64,
+                'name': "foo"}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_file = ProjectFile.objects.filter(project=self.project,
+                                                  author=self.user).first()
+        self.assertIsNotNone(created_file)
+        content = created_file.file.readlines()
+        self.assertEqual(content[0], b64_content)
+
     def test_create_multiple_files(self):
         files_list = []
         file_count = 3
@@ -266,6 +282,29 @@ class ProjectFileTest(ProjectTestMixin, APITestCase):
         self.assertEqual(db_project_file.file.size, new_upload.size)
         self.assertTrue(filecmp.cmp(os.path.join("/tmp/", new_upload.name),
                                     db_project_file.file.path))
+
+    def test_base64_file_update(self):
+        uploaded_file = generate_random_file_content("to_update")
+        project_file = ProjectFileFactory(author=self.user,
+                                          project=self.project,
+                                          file=uploaded_file,
+                                          public=False)
+        kwargs = self.url_kwargs
+        kwargs['pk'] = project_file.pk
+        url = reverse('projectfile-detail', kwargs=kwargs)
+        b64_content = b"test"
+        b64 = base64.b64encode(b64_content)
+        data = {'project': self.project.pk,
+                'public': True,
+                'base64_data': b64,
+                'name': project_file.file.name.split("/")[-1]}
+        response = self.client.put(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        proj_file_reloaded = ProjectFile.objects.get(pk=project_file.pk)
+        self.assertEqual(proj_file_reloaded.file.path, project_file.file.path)
+
+        content = proj_file_reloaded.file.readlines()
+        self.assertEqual(content[0], b64_content)
 
     def test_file_delete(self):
         uploaded_file = generate_random_file_content("to_delete")

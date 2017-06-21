@@ -102,7 +102,7 @@ urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'(?P<namespace>[\w-]+)/billing/subscription_required/$', billing_views.no_subscription,
         name="subscription-required"),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
 
 
 @api_view()
@@ -120,5 +120,5 @@ if settings.DEBUG:
     urlpatterns += [
         url(r'^auth/simple-token-auth/$', user_views.ObtainAuthToken.as_view()),
         url(r'^__debug__/', include(debug_toolbar.urls)),
-    ]
+    ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns = staticfiles_urlpatterns() + urlpatterns
