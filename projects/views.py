@@ -58,7 +58,6 @@ class ProjectFileViewSet(ProjectMixin,
     parser_classes = (MultiPartParser, FormParser)
 
     def create(self, request, *args, **kwargs):
-
         files = request.FILES.get("file") or request.FILES.getlist("files")
         if not isinstance(files, list):
             files = [files]
