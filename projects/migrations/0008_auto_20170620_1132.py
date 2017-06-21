@@ -9,7 +9,7 @@ import projects.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0008_projectfile'),
+        ('projects', '0007_projectfile'),
     ]
 
     operations = [
