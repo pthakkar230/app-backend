@@ -112,6 +112,12 @@ Modify environment variables located in `env` file with your local settings. You
     DOCKER_DOMAIN=172.17.0.1:2375
     DOCKER_HOST=tcp://172.17.0.1:2375/
     ELASTICSEARCH_URL=http://search:9200/
+    EMAIL_HOST=
+    EMAIL_PORT=
+    EMAIL_HOST_USER=
+    EMAIL_HOST_PASSWORD=
+    EMAIL_USE_SSL=
+    EMAIL_USE_TLS=
     GITHUB_CLIENT_ID=
     GITHUB_CLIENT_SECRET=
     GOOGLE_CLIENT_ID=
@@ -128,6 +134,8 @@ Modify environment variables located in `env` file with your local settings. You
 ```
 
 > Obtain internal virtual machine IPv4 address with `ifconfig`. Usually enp0s3 or eth0 will be the IP address you need to configure for DOCKER_HOST env var. If you switch setup to use production configuration (`DJANGO_SETTINGS_MODULE='appdj.settings.prod`) make sure to set debug to false (`DEBUG=False`). By default, app-backend allows connections from `staging.3blades.io` and `localhost`. Additional host names or IP addresses can be added to the `TBS_HOST`.
+
+> When launching stack with `dev` environment, `EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'` will always print emails to the console, regardless of what values are set.
 
 A volume mount is used to persist files used by docker containers. By default, `docker-compose.yml` uses the `/workspaces` directory. You can either add that directory or change `docker-compose.yml` to use another one.
 
