@@ -2,6 +2,7 @@ import logging
 import stripe
 
 from django.utils import timezone
+from django.conf import settings
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import api_view
 from rest_framework.permissions import BasePermission
@@ -14,6 +15,7 @@ from billing.models import (Plan, Customer,
 from billing.serializers import (PlanSerializer, CustomerSerializer, CardSerializer,
                                  SubscriptionSerializer, InvoiceSerializer)
 log = logging.getLogger('billing')
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 class CustomerViewSet(NamespaceMixin,

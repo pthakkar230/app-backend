@@ -13,7 +13,9 @@ class SubscriptionMiddleware(object):
             url_name = resolve(request.path).url_name
             if url_name not in settings.SUBSCRIPTION_EXEMPT_URLS:
                 user = request.action.user
-                if user and not user.is_staff:
+                if (settings.ENABLE_BILLING
+                    and user
+                    and not user.is_staff):
                     customer = user.customer
                     if not customer.has_active_subscription():
                         return redirect("subscription-required",
