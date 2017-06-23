@@ -327,6 +327,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 LOGGING = TBS_LOGGING
 
+ENABLE_BILLING = os.environ.get("ENABLE_BILLING", "false").lower() == "true"
+
 # A list of url *names* that do not require a subscription to access.
 SUBSCRIPTION_EXEMPT_URLS = [LOGIN_URL,
                             "subscription-required"]

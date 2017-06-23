@@ -47,3 +47,5 @@ HAYSTACK_CONNECTIONS = {
         'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
     }
 }
+
+ENABLE_BILLING = True
