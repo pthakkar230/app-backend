@@ -1,14 +1,42 @@
+import logging
 import ujson
 
+from django.contrib.auth import get_user_model
 from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import get_view_name
+from rest_framework_jwt.serializers import VerifyJSONWebTokenSerializer
 from rest_framework.authtoken.models import Token
 
 from .models import Action
-import logging
+
 log = logging.getLogger('projects')
+
+User = get_user_model()
+
+
+def get_user_from_jwt(token):
+    serializer = VerifyJSONWebTokenSerializer(data={'token': token})
+    if serializer.is_valid():
+        return serializer.validated_data.get('user')
+
+
+def get_user_from_simple_token(token):
+    token_obj = Token.objects.filter(key=token).first()
+    if token_obj:
+        return token_obj.user
+
+
+def get_user_from_token_header(request):
+    token_header = request.META.get('HTTP_AUTHORIZATION')
+    if not token_header or ' ' not in token_header:
+        return
+    prefix, token = token_header.split()
+    if prefix == 'JWT':
+        return get_user_from_jwt(token)
+    elif prefix == 'Token':
+        return get_user_from_simple_token(token)
 
 
 class ActionMiddleware(object):
@@ -22,20 +50,9 @@ class ActionMiddleware(object):
             body = ujson.loads(request.body)
         except ValueError:
             body = {}
-        user = None
-        token_header = request.META.get('HTTP_AUTHORIZATION')
-        if token_header and token_header.startswith('Token '):
-            token = token_header.split(' ')[1]
-            try:
-                token_obj = Token.objects.get(key=token)
-            except Token.DoesNotExist:
-                pass
-            else:
-                user = token_obj.user
-                request.user = user
         filter_kwargs = dict(
             path=path,
-            user=user,
+            user=get_user_from_token_header(request),
             state=Action.CREATED,
         )
         defaults = dict(
@@ -56,6 +73,8 @@ class ActionMiddleware(object):
         self._set_action_state(action, response.status_code)
         self._set_action_object(action, request, response)
         action.end_date = timezone.now()
+        if action.user is None:
+            action.user = request.user if isinstance(request.user, User) else None
         action.save()
         return response
 

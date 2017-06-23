@@ -103,12 +103,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'appdj.wsgi.application'
 
 # Email Settings
-EMAIL_HOST=os.environ.get('EMAIL_HOST', 'localhost')
-EMAIL_PORT=os.environ.get('EMAIL_PORT', '587')
-EMAIL_HOST_USER=os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD=os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_SSL=os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
-EMAIL_USE_TLS=os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = os.environ.get('EMAIL_PORT', '587')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
