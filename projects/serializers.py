@@ -11,6 +11,8 @@ from base.serializers import SearchSerializerMixin
 from projects.models import (Project, Collaborator,
                              SyncedResource, ProjectFile)
 
+User = get_user_model()
+
 
 class ProjectSerializer(SearchSerializerMixin, serializers.ModelSerializer):
     owner = serializers.CharField(source='get_owner_name', read_only=True)
@@ -36,7 +38,7 @@ class ProjectSerializer(SearchSerializerMixin, serializers.ModelSerializer):
 
 class FileAuthorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = get_user_model()
+        model = User
         fields = ('id', 'email', 'username')
         read_only_fields = ('email', 'username')
 
@@ -89,6 +91,10 @@ class CollaboratorSerializer(serializers.ModelSerializer):
         model = Collaborator
         fields = ('id', 'owner', 'joined', 'username', 'email', 'first_name', 'last_name', 'member', 'permissions')
 
+    def validate_member(self, value):
+        if not User.objects.filter(Q(username=value) | Q(email=value)).exists():
+            raise serializers.ValidationError("User %s does not exists" % value)
+
     def create(self, validated_data):
         permissions = validated_data.pop('permissions', ['read_project'])
         member = validated_data.pop('member')
@@ -97,7 +103,7 @@ class CollaboratorSerializer(serializers.ModelSerializer):
         owner = validated_data.get("owner", False)
         if owner is True:
             Collaborator.objects.filter(project_id=project_id).update(owner=False)
-        user = get_user_model().objects.filter(Q(username=member) | Q(email=member)).first()
+        user = User.objects.filter(Q(username=member) | Q(email=member)).first()
         for permission in permissions:
             assign_perm(permission, user, project)
         return Collaborator.objects.create(user=user, project_id=project_id, **validated_data)
