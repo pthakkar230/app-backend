@@ -31,7 +31,6 @@ def run(files_list):
         else:
             proj_file, created = ProjectFile.objects.get_or_create(author=user,
                                                                    project=project,
-                                                                   public=True,
                                                                    file=line)
             if created:
                 log.info("Just created a file via Watchman: {pf}".format(pf=proj_file))

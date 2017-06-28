@@ -30,7 +30,7 @@ class FileWatcherTest(TestCase):
 
     def test_file_creation(self):
         # projects/tests/file_upload_test_1.txt
-        copy2("projects/tests/file_upload_test_1.txt", self.project_root)
+        copy2("projects/tests/file_upload_test_1.txt", str(self.project_root))
         file_name = "{user}/{proj}/file_upload_test_1.txt".format(user=self.user.username,
                                                                   proj=self.project.pk)
         files_sent_to_watchman = [{'name': file_name, 'exists': True}]
@@ -55,7 +55,7 @@ class FileWatcherTest(TestCase):
         self.assertFalse(os.path.exists(full_path))
 
     def test_file_create_and_delete_together(self):
-        copy2("projects/tests/file_upload_test_1.txt", self.project_root)
+        copy2("projects/tests/file_upload_test_1.txt", str(self.project_root))
         file_name = "{user}/{proj}/file_upload_test_1.txt".format(user=self.user.username,
                                                                   proj=self.project.pk)
 
