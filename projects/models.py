@@ -96,6 +96,11 @@ class ProjectFile(models.Model):
 
     objects = FileQuerySet.as_manager()
 
+    def __str__(self):
+        return "{auth};{proj};{name}".format(auth=self.author.username,
+                                             proj=self.project.name,
+                                             name=self.file.name)
+
     def get_absolute_url(self, namespace):
         return reverse(
             'file-detail',
