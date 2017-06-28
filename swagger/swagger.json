@@ -5906,7 +5906,7 @@
         },
         "id" : {
           "type" : "array",
-          "description" : "Id field errors.",
+          "description" : "Id field errors this",
           "items" : {
             "type" : "string"
           }
