@@ -89,5 +89,5 @@ class FileWatcherTest(TestCase):
         to_watchman = [{'name': project_file.file.name, 'exists': True}]
         run(files_list=to_watchman)
         self.assertEqual(ProjectFile.objects.count(), 1)
-        files_in_project = [name for name in os.listdir(self.project_root)]
+        files_in_project = [name for name in os.listdir(str(self.project_root))]
         self.assertEqual(len(files_in_project), 1)
