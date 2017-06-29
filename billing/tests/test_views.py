@@ -1,5 +1,6 @@
 import stripe
 import logging
+from django.test import override_settings
 from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -82,7 +83,6 @@ class CustomerTest(APITestCase):
         url = reverse("customer-detail", kwargs={'namespace': self.user.username,
                                                  'pk': customer.pk})
 
-        # TODO: Figure out how to only require user on create. Seems to require two serializers, which blech
         data = {'account_balance': 5000, 'user': str(self.user.pk)}
         response = self.client.put(url, data)
 
@@ -122,6 +122,16 @@ class CustomerTest(APITestCase):
         url = reverse("project-list", kwargs={'namespace': self.user.username})
         response = self.client.get(url, follow=True)
         self.assertEqual(response.status_code, status.HTTP_402_PAYMENT_REQUIRED)
+        self.user.is_staff = True
+        self.user.save()
+
+    @override_settings(ENABLE_BILLING=False)
+    def test_billing_disabled_doesnt_reject_user(self):
+        self.user.is_staff = False
+        self.user.save()
+        url = reverse("project-list", kwargs={'namespace': self.user.username})
+        response = self.client.get(url, follow=True)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.is_staff = True
         self.user.save()
 
@@ -358,8 +368,8 @@ class SubscriptionTest(APITestCase):
         self.plans_to_delete.append(plan)
         return plan
 
-    def _create_subscription_in_stripe(self):
-        plan = self._create_plan_in_stripe()
+    def _create_subscription_in_stripe(self, trial_period=7):
+        plan = self._create_plan_in_stripe(trial_period)
         url = reverse("subscription-list", kwargs={'namespace': self.user.username})
         data = {'plan': plan.pk}
         self.client.post(url, data)

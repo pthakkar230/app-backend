@@ -118,6 +118,7 @@ Modify environment variables located in `env` file with your local settings. You
     EMAIL_HOST_PASSWORD=
     EMAIL_USE_SSL=
     EMAIL_USE_TLS=
+    ENABLE_BILLING=True
     GITHUB_CLIENT_ID=
     GITHUB_CLIENT_SECRET=
     GOOGLE_CLIENT_ID=

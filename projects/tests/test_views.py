@@ -4,7 +4,6 @@ import os
 import base64
 from pathlib import Path
 
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -15,25 +14,11 @@ from rest_framework.test import APITestCase
 
 from projects.tests.factories import (CollaboratorFactory,
                                       ProjectFileFactory)
+from projects.tests.utils import generate_random_file_content
 from users.tests.factories import UserFactory
 from projects.models import Project, ProjectFile
 import logging
 log = logging.getLogger("projects")
-
-
-def generate_random_file_content(suffix, num_kb=2):
-    fname = "test_file_" + str(suffix)
-    full_path = os.path.join("/tmp/", fname)
-    if os.path.isfile(full_path):
-        os.remove(full_path)
-    fout = open(full_path, "wb")
-    fout.write(os.urandom(1024 * num_kb))
-    fout.close()
-    fin = open(full_path, "rb")
-    uploaded_file = SimpleUploadedFile(fname,
-                                       fin.read(),
-                                       content_type="multipart/form-data")
-    return uploaded_file
 
 
 class ProjectTestMixin(object):

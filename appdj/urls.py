@@ -39,11 +39,7 @@ router.register(r'servers/options/resources', servers_views.EnvironmentResourceV
 router.register(r'users', user_views.UserViewSet)
 router.register(r'hosts', infra_views.DockerHostViewSet)
 router.register(r'triggers', trigger_views.TriggerViewSet)
-router.register(r'billing/customers', billing_views.CustomerViewSet)
-router.register(r'billing/cards', billing_views.CardViewSet)
-router.register(r'billing/plans', billing_views.PlanViewSet)
-router.register(r'billing/subscriptions', billing_views.SubscriptionViewSet)
-router.register(r'billing/invoices', billing_views.InvoiceViewSet)
+
 user_router = routers.NestedSimpleRouter(router, r'users', lookup='user')
 user_router.register(r'emails', user_views.EmailViewSet)
 user_router.register(r'integrations', user_views.IntegrationViewSet)
@@ -59,6 +55,14 @@ project_router.register(r'servers/(?P<server_pk>[^/.]+)/run-stats',
 project_router.register(r'servers/(?P<server_pk>[^/.]+)/stats',
                         servers_views.ServerStatisticsViewSet)
 project_router.register(r'collaborators', project_views.CollaboratorViewSet)
+
+if settings.ENABLE_BILLING:
+    router.register(r'billing/customers', billing_views.CustomerViewSet)
+    router.register(r'billing/cards', billing_views.CardViewSet)
+    router.register(r'billing/plans', billing_views.PlanViewSet)
+    router.register(r'billing/subscriptions', billing_views.SubscriptionViewSet)
+    router.register(r'billing/invoices', billing_views.InvoiceViewSet)
+
 router.register(r'service/(?P<server_pk>[^/.]+)/trigger', trigger_views.ServerActionViewSet)
 
 schema_view = get_swagger_view(title='3blades API', url=settings.FORCE_SCRIPT_NAME or '/')

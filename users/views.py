@@ -6,9 +6,11 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404, CreateAPIView
 from rest_framework.mixins import ListModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from base.permissions import DeleteAdminOnly
 from base.views import UUIDRegexMixin
 from utils import create_ssh_key
 
@@ -22,9 +24,11 @@ User = get_user_model()
 class UserViewSet(UUIDRegexMixin, viewsets.ModelViewSet):
     queryset = User.objects.filter(is_active=True).select_related('profile')
     serializer_class = UserSerializer
+    filter_fields = ('username', 'email')
+    permission_classes = (IsAuthenticated, DeleteAdminOnly)
 
     def perform_destroy(self, instance):
-        instance.active = False
+        instance.is_active = False
         instance.save()
 
 

@@ -7,13 +7,14 @@ from django.urls import reverse
 from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import APIRequestFactory
+from rest_framework_jwt.settings import api_settings
 
 from actions.views import ActionList
 from appdj.celery import set_action_state
 from servers.tests.factories import ServerFactory
 from users.tests.factories import UserFactory
 from .factories import ActionFactory
-from ..middleware import ActionMiddleware
+from ..middleware import ActionMiddleware, get_user_from_jwt, get_user_from_simple_token, get_user_from_token_header
 from ..models import Action
 
 
@@ -204,3 +205,36 @@ class ActionMiddlewareTest(TestCase):
         request.META['HTTP_X_FORWARDED_FOR'] = '127.0.0.1, 192.168.0.1'
         ip = ActionMiddleware._get_client_ip(request)
         self.assertEqual(ip, '192.168.0.1')
+
+
+jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+
+class GetUserTestCase(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.simple_token = self.user.auth_token.key
+        payload = jwt_payload_handler(self.user)
+        self.jwt = jwt_encode_handler(payload)
+        self.factory = APIRequestFactory()
+
+    def test_get_user_from_jwt(self):
+        user = get_user_from_jwt(self.jwt)
+        self.assertEqual(self.user.pk, user.pk)
+
+    def test_get_user_from_simple_token(self):
+        user = get_user_from_simple_token(self.simple_token)
+        self.assertEqual(self.user.pk, user.pk)
+
+    def test_get_user_from_token_heder_jwt(self):
+        request = self.factory.request()
+        request.META['HTTP_AUTHORIZATION'] = 'JWT {}'.format(self.jwt)
+        user = get_user_from_token_header(request)
+        self.assertEqual(self.user.pk, user.pk)
+
+    def test_get_user_from_token_heder_simple(self):
+        request = self.factory.request()
+        request.META['HTTP_AUTHORIZATION'] = 'Token {}'.format(self.simple_token)
+        user = get_user_from_token_header(request)
+        self.assertEqual(self.user.pk, user.pk)
