@@ -51,7 +51,11 @@ script:
   # tag as latest to use in the full-deployment script (ansible)
   - docker tag $DOCKER_IMAGE_NAME $DOCKER_IMAGE_NAME:latest
   # push image to the repository
+<<<<<<< HEAD
   - docker push $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER
+=======
+  # - docker push $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER
+>>>>>>> 64b5d0334f159fe2f391b64612b26cc45f186e24
 
 after_success:
   #- if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
