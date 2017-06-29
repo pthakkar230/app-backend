@@ -42,6 +42,22 @@ install:
 script:
   # run tests
   - coverage run --source='.' manage.py test && coverage report -m
+  # docker login
+  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  # build the image
+  - docker build --no-cache -t $DOCKER_IMAGE_NAME .
+  # tag the build
+  - docker tag $DOCKER_IMAGE_NAME $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER
+  # tag as latest to use in the full-deployment script (ansible)
+  - docker tag $DOCKER_IMAGE_NAME $DOCKER_IMAGE_NAME:latest
+  # push image to the repository
+  # - docker push $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER
+
+after_success:
+  #- if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
+  #   docker push $DOCKER_IMAGE_NAME:build-$TRAVIS_BUILD_NUMBER;
+  #  fi
+  - bash <(curl -s https://codecov.io/bash) -t 6052613a-9108-4796-8984-adb3b8a142b2
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 notifications:
