@@ -43,7 +43,7 @@ script:
   # run tests
   - coverage run --source='.' manage.py test && coverage report -m
   # docker login
-  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
   # build the image
   - docker build --no-cache -t $DOCKER_IMAGE_NAME .
   # tag the build
